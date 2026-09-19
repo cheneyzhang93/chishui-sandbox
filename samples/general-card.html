@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>样张 ① 将领事件卡 · 四渡赤水作战沙盘</title>
+<style>
+  :root{
+    --paper:#efe4cd; --paper2:#e3d5b6; --ink:#241b12; --ink2:#5b4a35;
+    --line:#8d7752; --sand:#12161c; --sand2:#1a2029;
+    --battle:#a3271b; --decision:#8a6516; --cross:#1c6663;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 700px at 50% -10%,#1e2733 0%,var(--sand) 60%);
+    color:#e8e2d6; font:14px/1.5 "Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+    min-height:100vh; padding:26px 24px 60px;
+  }
+  .top{max-width:1280px;margin:0 auto 22px}
+  .top h1{margin:0 0 6px;font:700 21px/1.3 "SimHei","Microsoft YaHei",sans-serif;letter-spacing:.5px}
+  .top .sub{margin:0;color:#9fb0c2;font-size:13px}
+  .top .sub b{color:#ffbfae}
+
+  .cards{max-width:1280px;margin:0 auto;display:grid;gap:20px;
+         grid-template-columns:repeat(auto-fit,minmax(372px,1fr))}
+
+  /* ---------- 卡片本体 ---------- */
+  .card{
+    position:relative; background:var(--paper); color:var(--ink);
+    border:1px solid #2a1f16; border-radius:3px;
+    box-shadow:0 14px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.35);
+    padding:0 0 0 0; overflow:hidden;
+  }
+  /* 纸张颗粒 + 暗角 */
+  .card::before{
+    content:""; position:absolute; inset:0; pointer-events:none; z-index:3;
+    background-image:
+      repeating-linear-gradient(0deg,rgba(120,90,50,.055) 0 1px,transparent 1px 3px),
+      radial-gradient(120% 90% at 50% 0%,rgba(255,250,235,.55) 0%,transparent 55%),
+      radial-gradient(130% 120% at 50% 110%,rgba(90,64,32,.20) 0%,transparent 60%);
+    mix-blend-mode:multiply;
+  }
+  .card::after{ /* 四角定位角标 */
+    content:""; position:absolute; inset:7px; pointer-events:none; z-index:4;
+    background:
+      linear-gradient(var(--line),var(--line)) 0 0/14px 1px no-repeat,
+      linear-gradient(var(--line),var(--line)) 0 0/1px 14px no-repeat,
+      linear-gradient(var(--line),var(--line)) 100% 0/14px 1px no-repeat,
+      linear-gradient(var(--line),var(--line)) 100% 0/1px 14px no-repeat,
+      linear-gradient(var(--line),var(--line)) 0 100%/14px 1px no-repeat,
+      linear-gradient(var(--line),var(--line)) 0 100%/1px 14px no-repeat,
+      linear-gradient(var(--line),var(--line)) 100% 100%/14px 1px no-repeat,
+      linear-gradient(var(--line),var(--line)) 100% 100%/1px 14px no-repeat;
+    opacity:.55;
+  }
+  .card.k-battle{--accent:var(--battle)}
+  .card.k-decision{--accent:var(--decision)}
+  .card.k-cross{--accent:var(--cross)}
+
+  .rail{height:5px;background:
+    repeating-linear-gradient(90deg,var(--accent) 0 10px,transparent 10px 14px);
+    opacity:.85}
+
+  .head{display:flex;gap:14px;padding:15px 15px 12px}
+  .portrait{
+    position:relative; flex:0 0 176px; width:176px; height:200px;
+    border:1px solid #3a2c1e; box-shadow:inset 0 0 0 4px var(--paper), 0 0 0 1px rgba(58,44,30,.35);
+    background:#e6d9bd; overflow:hidden;
+  }
+  .portrait img{
+    width:100%; height:100%; display:block;
+    object-fit:cover; object-position:50% 0;      /* 顶端对齐：裁掉底部水印与下摆 */
+    filter:sepia(.16) contrast(1.06) saturate(.92);
+  }
+  .portrait::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(110% 80% at 45% 30%,transparent 40%,rgba(70,48,20,.28) 100%)}
+  .pchip{
+    position:absolute; left:0; bottom:0; z-index:2;
+    background:rgba(28,20,12,.86); color:#f0dcbb;
+    font-size:10.5px; letter-spacing:.3px; padding:3px 6px;
+  }
+
+  .body{flex:1 1 auto; min-width:0}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px}
+  .chip{font-size:11px;line-height:1;padding:4px 7px;border:1px solid currentColor;
+        border-radius:2px;letter-spacing:.5px}
+  .chip.c-kind{color:var(--accent);font-weight:700}
+  .chip.c-tbd{color:#8a6a1f;border-style:dashed}
+
+  h2.title{margin:0 0 6px;font:700 22px/1.22 "SimHei","Microsoft YaHei",sans-serif;letter-spacing:1px}
+  .meta{margin:0 0 10px;font-size:12.5px;color:var(--ink2)}
+  .meta i{font-style:normal;opacity:.5;margin:0 5px}
+
+  .persons{margin:0;padding:9px 0 0;border-top:1px dashed rgba(90,72,48,.5)}
+  .persons div{display:flex;align-items:baseline;gap:8px;padding:3px 0}
+  .persons dt{margin:0;font-weight:700;font-size:13.5px;min-width:56px}
+  .persons dd{margin:0;font-size:12px;color:var(--ink2)}
+
+  .quote{
+    margin:0 15px 12px; padding:10px 12px; position:relative;
+    border-left:3px solid var(--accent); background:rgba(255,252,244,.5);
+    font:14px/1.75 "KaiTi","STKaiti","Kaiti SC",serif; color:#3a2c1e;
+  }
+  .qph{color:#9a7b3e;border-bottom:1px dashed #b99a5c;padding-bottom:1px}
+
+  .foot{padding:9px 15px 13px;border-top:1px solid rgba(90,72,48,.35);
+        background:rgba(214,199,168,.35);font-size:11.5px;line-height:1.55}
+  .foot .src{color:#4d3d29}
+  .foot .warn{margin-top:4px;color:#8a2d20}
+
+  /* ---------- 说明区 ---------- */
+  .notes{max-width:1280px;margin:26px auto 0;background:var(--sand2);
+         border:1px solid #2c3947;border-radius:6px;padding:16px 18px}
+  .notes h3{margin:0 0 10px;font-size:15px;color:#e8e2d6}
+  .notes h4{margin:14px 0 6px;font-size:13px;color:#a9c0d6;font-weight:600}
+  .notes ol,.notes ul{margin:0;padding-left:20px;color:#c8d3de;font-size:13px}
+  .notes li{margin:4px 0}
+  .notes code{background:#0e1319;border:1px solid #2c3947;border-radius:3px;
+              padding:1px 5px;font-size:12px;color:#8fd8c8}
+  .notes .kv{color:#9fb0c2}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>样张 ① 将领事件卡（版画人像 ＋ 事件卡版式）</h1>
+  <p class="sub">同一版式的三种卡型 · 战斗卡 / 决策卡 / 渡河卡。人像为<b>木刻风格艺术演绎，不对应任何真实人物</b>，定稿须替换为合规图像或全部改为无名群像演绎。</p>
+</header>
+
+<main class="cards">
+
+  <!-- ========== 战斗卡 ========== -->
+  <article class="card k-battle" id="card-qinggangpo">
+    <div class="rail"></div>
+    <div class="head">
+      <div class="portrait">
+        <img src="assets/portrait-woodcut.png" alt="木刻风格红军指挥员形象（艺术演绎，非真实人物）">
+        <span class="pchip">木刻演绎 · 非本人肖像</span>
+      </div>
+      <div class="body">
+        <div class="chips">
+          <span class="chip c-kind">战斗</span>
+          <span class="chip c-tbd">坐标待核</span>
+        </div>
+        <h2 class="title">青杠坡战斗</h2>
+        <p class="meta"><span>1935年1月28日</span><i>·</i><span>贵州习水 土城·青杠坡</span><i>·</i><span>时段待核</span></p>
+        <dl class="persons">
+          <div><dt>彭德怀</dt><dd>红三军团 军团长</dd></div>
+          <div><dt>刘伯承</dt><dd>红军 总参谋长</dd></div>
+          <div><dt>陈　赓</dt><dd>红军 干部团 团长</dd></div>
+        </dl>
+      </div>
+    </div>
+    <blockquote class="quote">「<span class="qph">此处放史料原文（须核出处，逐条标页码）</span>」</blockquote>
+    <footer class="foot">
+      <div class="src">已核：1935年1月27日红军北进途中与川军在青杠坡遭遇，28日战斗正式打响。<br>出处：<span class="kv">《红军长征在贵州》系列报道·第十期（网络来源，待升级为权威出版物并标页码）</span></div>
+      <div class="warn">人物与职务为史实；参战部队构成、时段与引文待核，形象为艺术演绎</div>
+    </footer>
+  </article>
+
+  <!-- ========== 决策卡 ========== -->
+  <article class="card k-decision" id="card-tucheng-meeting">
+    <div class="rail"></div>
+    <div class="head">
+      <div class="portrait">
+        <img src="assets/portrait-woodcut.png" alt="木刻风格红军指挥员形象（艺术演绎，非真实人物）">
+        <span class="pchip">木刻演绎 · 非本人肖像</span>
+      </div>
+      <div class="body">
+        <div class="chips">
+          <span class="chip c-kind">决策</span>
+          <span class="chip c-tbd">名单待核</span>
+        </div>
+        <h2 class="title">土城会议 · 决定西渡赤水</h2>
+        <p class="meta"><span>1935年1月28日</span><i>·</i><span>贵州习水 土城·旧商会会馆</span><i>·</i><span>时段待核</span></p>
+        <dl class="persons">
+          <div><dt>朱　德</dt><dd>中革军委 主席 · 红军总司令</dd></div>
+          <div><dt>周恩来</dt><dd>中革军委 副主席</dd></div>
+          <div><dt>刘伯承</dt><dd>红军 总参谋长</dd></div>
+        </dl>
+      </div>
+    </div>
+    <blockquote class="quote">「<span class="qph">此处放史料原文（须核出处，逐条标页码）</span>」</blockquote>
+    <footer class="foot">
+      <div class="src">已核：会议地点为土城旧商会会馆，决定「立即撤出青杠坡战斗，从土城一带西渡赤水河」。<br>出处：<span class="kv">《红军长征在贵州》系列报道·第十期（网络来源，待升级）</span></div>
+      <div class="warn">参会范围与具体时段待核（一说当晚、一说次日凌晨）；形象为艺术演绎</div>
+    </footer>
+  </article>
+
+  <!-- ========== 渡河卡 ========== -->
+  <article class="card k-cross" id="card-first-crossing">
+    <div class="rail"></div>
+    <div class="head">
+      <div class="portrait">
+        <img src="assets/portrait-woodcut.png" alt="木刻风格红军指挥员形象（艺术演绎，非真实人物）">
+        <span class="pchip">木刻演绎 · 非本人肖像</span>
+      </div>
+      <div class="body">
+        <div class="chips">
+          <span class="chip c-kind">渡河</span>
+          <span class="chip c-tbd">渡口坐标待核</span>
+        </div>
+        <h2 class="title">一渡赤水 · 土城 — 元厚</h2>
+        <p class="meta"><span>1935年1月29日</span><i>·</i><span>土城南北地区 / 猿猴（今元厚）</span><i>·</i><span>渡口待核</span></p>
+        <dl class="persons">
+          <div><dt>周恩来</dt><dd>中革军委 副主席</dd></div>
+          <div><dt>刘伯承</dt><dd>红军 总参谋长</dd></div>
+        </dl>
+      </div>
+    </div>
+    <blockquote class="quote">「<span class="qph">此处放史料原文（须核出处，逐条标页码）</span>」</blockquote>
+    <footer class="foot">
+      <div class="src">已核：1月29日分三路从猿猴（今元厚）、土城南北地区西渡赤水河。<br>出处：<span class="kv">《红军长征在贵州》系列报道·第十期（网络来源，待升级）</span></div>
+      <div class="warn">「浑溪口」等具体渡口位置与渡河时段待核；渡口坐标建议以纪念馆标注 ＋ 实地比对后标定</div>
+    </footer>
+  </article>
+
+</main>
+
+<section class="notes">
+  <h3>样张说明 · 该看什么</h3>
+
+  <h4>版式</h4>
+  <ul>
+    <li>卡片定宽 <code>372px+</code>，人像区 <code>176×200</code>，右侧为信息区（卡型 chip → 标题 → 时间·地点 → 人物职务行）。</li>
+    <li>引文位用虚线占位，<b>样张不写任何虚构台词</b>；定稿逐条核出处后填入，并标页码。</li>
+    <li>人物行只写「姓名 ＋ 1935 年 1 月时的职务」，职务为史实，可放心；是否在场、发言内容一律留待核。</li>
+  </ul>
+
+  <h4>三条硬约束（决定定稿怎么做图）</h4>
+  <ol>
+    <li><b>人像：不能用真实人物肖像。</b>《民法典》第 994 条：死者肖像利益由近亲属主张；官方历史照片的著作权多在新华社、档案馆。可行路径三选一 —— ① 取得授权 / 纪念馆供图；② 全部改「无名战士·群像」木刻演绎（本样张走这条）；③ 特邀美术创作并在合同里约定著作权与使用范围。</li>
+    <li><b>引文：一个字都不能编。</b>样张的引文位是空占位，正是为了在流程上堵死「顺手写一句很像的话」。</li>
+    <li><b>审读：</b>重大革命历史题材需履行审读程序；卡片文案不得虚构对话、不得贬损人物、不得出现戏说化处理。</li>
+  </ol>
+
+  <h4>本次核到的史实（卡片上的「已核」就是这几条）</h4>
+  <ul>
+    <li>1935-01-24 中央红军占土城 —— 中国红色旅游网《贵州·习水·土城》</li>
+    <li>1935-01-27 红军北进途中与川军在青杠坡遭遇；01-28 青杠坡战斗正式打响 —— 《红军长征在贵州》系列报道·第十期《土城会议：拉开四渡赤水的序幕》</li>
+    <li>土城会议地点为土城旧商会会馆，决定「立即撤出青杠坡战斗，从土城一带西渡赤水河」 —— 同上</li>
+    <li>1935-01-29 分三路从猿猴（今元厚）、土城南北地区西渡赤水河 —— 同上</li>
+    <li>四渡总体时段与渡口 —— 《专家解析四渡赤水》（当代传播）</li>
+  </ul>
+  <p class="kv" style="font-size:12.5px;color:#9fb0c2;margin:6px 0 0">以上均为网络来源，只作线索；定稿须换成权威出版物与档案，并逐条标页码。</p>
+
+  <h4>下一步决策点</h4>
+  <ul>
+    <li>卡型清单：战斗 / 决策 / 渡河 / 会议 / 集结（建议先做 4 类，够覆盖土城—一渡段）。</li>
+    <li>人像路线：上面 ① / ② / ③ 选一条，这条定了才好批量出图。</li>
+    <li>挂接方式：每张卡绑定一条行军日志记录（见样张 ③ 的 <code>eventCardRef</code> 字段），时间轴到点自动弹出。</li>
+  </ul>
+</section>
+
+</body>
+</html>

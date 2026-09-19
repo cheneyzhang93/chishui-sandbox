@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>三件样张 · 四渡赤水作战沙盘</title>
+<style>
+  :root{--sand:#12161c;--sand2:#1a2029;--line:#2c3947}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:radial-gradient(1100px 620px at 50% -10%,#1e2733 0%,var(--sand) 62%);
+    color:#e8e2d6;font:14px/1.6 "Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+    min-height:100vh;padding:40px 26px 70px}
+  .wrap{max-width:1080px;margin:0 auto}
+  h1{margin:0 0 8px;font:700 24px/1.3 "SimHei","Microsoft YaHei",sans-serif;letter-spacing:.5px}
+  .lead{margin:0 0 30px;color:#9fb0c2;font-size:13.5px;max-width:760px}
+  .lead b{color:#ffbfae}
+  .lead a{color:#ffd166;text-decoration:none;border-bottom:1px dotted rgba(255,209,102,.5)}
+  .lead a:hover{border-bottom-style:solid}
+
+  .list{display:grid;gap:16px}
+  a.card{display:block;text-decoration:none;color:inherit;background:var(--sand2);
+    border:1px solid var(--line);border-radius:8px;padding:17px 19px;
+    transition:border-color .16s,transform .16s,background .16s}
+  a.card:hover{border-color:#4d6f92;background:#1e2833;transform:translateY(-2px)}
+  .card .tag{display:inline-block;font-size:11px;letter-spacing:.6px;color:#8fd8c8;
+    border:1px solid #2f5a52;border-radius:3px;padding:2px 7px;margin-bottom:9px}
+  .card h2{margin:0 0 7px;font:700 17px/1.3 "SimHei","Microsoft YaHei",sans-serif}
+  .card p{margin:0 0 9px;color:#a9bccd;font-size:13px}
+  .card .see{margin:0;color:#c8d3de;font-size:12.5px}
+  .card .see b{color:#ffd166;font-weight:600}
+  .card .path{margin-top:10px;font-size:11.5px;color:#6f8398;
+    font-family:ui-monospace,Consolas,monospace}
+
+  .split{display:flex;gap:17px;align-items:flex-start}
+  .split .txt{flex:1;min-width:0}
+  .thumb{flex:0 0 118px;margin:0}
+  .thumb img{width:118px;height:134px;display:block;object-fit:cover;object-position:50% 0;
+    border:1px solid #3a2c1e;background:#e6d9bd;box-shadow:0 0 0 1px rgba(58,44,30,.35);
+    filter:sepia(.16) contrast(1.06) saturate(.92)}
+  .thumb figcaption{margin-top:7px;font-size:10.5px;line-height:1.5;color:#8b9dae;text-align:center}
+
+  .foot{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);
+    color:#8b9dae;font-size:12.5px}
+  .foot b{color:#ffc9c4}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>三件样张 · 四渡赤水作战沙盘</h1>
+  <p class="lead">主入口是那盘可玩的格子棋（<b>命令 → 结算 → 播报</b>）；原首页的 <a href="../replay/">90 秒样片（土城 — 一渡）</a>挪进了 <code>replay/</code>，还挂着链接。此外另出三件独立样张，各自只回答一个问题。三件都可以单独打开看，不需要服务器后端。</p>
+
+  <div class="list">
+
+    <a class="card" href="four-crossings.html">
+      <span class="tag">样张 ② · 可交互</span>
+      <h2>四渡赤水态势总览 —— 2D「之」字图</h2>
+      <p>把四次渡河放进同一张图：红 → 橙 → 蓝 → 紫四段反向折线，就是你要的「反复」的刺激感。点「逐步演示」逐段揭示，左侧同步显示当前渡次与日期。</p>
+      <p class="see">该看什么：左上角<b>「2D 平视 / 3D 斜视」两个按钮</b> —— 点一下即可切换。0° 是纯 2D 俯视的「之」字轮廓，52° 斜视立刻能看出地形起伏。同一张图、同一份数据，不必二选一。</p>
+      <div class="path">samples/four-crossings.html</div>
+    </a>
+
+    <a class="card" href="general-card.html">
+      <div class="split">
+        <div class="txt">
+          <span class="tag">样张 ① · 静态</span>
+          <h2>将领事件卡 —— 版画人像 ＋ 卡片版式</h2>
+          <p>三种卡型（战斗 / 决策 / 渡河）共用一套版式。人像为木刻风格艺术演绎，<b>不对应任何真实人物</b>；引文位一律留空占位，不写虚构台词。</p>
+          <p class="see">该看什么：卡面信息层级够不够用；以及页面下方的<b>三条硬约束</b> —— 肖像权（民法典 994 条）、引文不许编、审读程序。人像路线（授权 / 无名群像 / 特邀创作）定了才好批量出图。</p>
+          <div class="path">samples/general-card.html</div>
+        </div>
+        <figure class="thumb">
+          <img src="assets/portrait-woodcut.png" alt="木刻风格红军指挥员形象（艺术演绎，非真实人物）">
+          <figcaption>卡头人像 · 木刻演绎<br>非本人肖像</figcaption>
+        </figure>
+      </div>
+    </a>
+
+    <a class="card" href="march-log-schema.md">
+      <span class="tag">样张 ③ · 文档</span>
+      <h2>行军日志级字段表 —— 土城 至 一渡</h2>
+      <p>把「行军路线」从一条画出来的曲线，升级成一条能追到出处的数据记录。25 个字段，含 <code>coordCertainty</code>（坐标确定性）与 <code>sourceLocator</code>（出处定位）列。</p>
+      <p class="see">该看什么：<b>1 月 24—29 日的 6 条示例记录</b>，能核的填值、核不出的留空标待核、文献打架的并列写。以及第 5 节「蓝军侧精度不对称」—— 这是最容易翻车的地方。</p>
+      <div class="path">samples/march-log-schema.md</div>
+    </a>
+
+  </div>
+
+  <p class="foot">三件样张里的路线走向、渡口坐标均为<b>示意</b>，卡片文案中凡未核到出处的内容一律标注「待核」；定稿须逐条换成权威出版物与档案，并标页码。</p>
+</div>
+</body>
+</html>

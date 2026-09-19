@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>四渡赤水 · 态势沙盘（样片：土城 → 一渡）</title>
+<link href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div id="map"></div>
+<div class="vignette"></div>
+
+<header class="panel" id="titlebar">
+  <div class="t1">四渡赤水 · 态势沙盘</div>
+  <div class="t2">样片：土城受挫 → 一渡赤水（1935.1.26 — 1.29）</div>
+  <div class="chip">路线与部分点位为示意，待史料标定</div>
+</header>
+
+<div class="panel" id="sidepanel">
+  <div class="row"><i class="sw red"></i>红军</div>
+  <div class="row"><i class="sw blue"></i>国民党军（川军）</div>
+  <div class="row"><i class="sw cyan"></i>渡口 / 要点</div>
+  <div class="row"><i class="sw amber"></i>事件</div>
+  <div class="row"><i class="sw dash"></i>虚线框标号：位置待核</div>
+  <div class="basemap">
+    <label>底图</label>
+    <select id="basemapSel">
+      <option value="img" selected>卫星影像</option>
+      <option value="dark">暗色指挥图</option>
+    </select>
+  </div>
+  <button id="srcBtn">史料与存疑</button>
+  <button id="logBtn">行军日志</button>
+  <a class="backlink" href="../">← 回到沙盘（格子棋，可玩）</a>
+</div>
+
+<div class="panel" id="srcPanel">
+  <h3>史料依据</h3>
+  <ul id="srcList"></ul>
+  <h3>存疑与待核</h3>
+  <ul id="uncList"></ul>
+  <button id="srcClose">关闭</button>
+</div>
+
+<div class="panel" id="logPanel">
+  <h3>行军日志 <span class="mtab">marchLog（行军日志记录表）</span></h3>
+  <div class="mscope" id="logScope"></div>
+  <ul id="logList"></ul>
+  <div class="mgaps" id="logGaps"></div>
+  <button id="logClose">关闭</button>
+</div>
+
+<div id="caption"></div>
+
+<footer class="panel" id="controls">
+  <button id="playBtn" title="播放/暂停">▶</button>
+  <button id="restartBtn" title="回到开始">↺</button>
+  <input type="range" id="timeSlider" min="0" max="90" step="0.05" value="0"/>
+  <span id="clock" class="mono">00:00 / 01:30</span>
+  <span id="hist" class="hist">1月26日 前</span>
+  <span id="status" class="status"></span>
+  <label class="auto"><input type="checkbox" id="autoCam" checked/> 自动镜头</label>
+  <label class="speed">速度
+    <select id="speedSel">
+      <option value="0.5">0.5</option>
+      <option value="1" selected>1</option>
+      <option value="1.5">1.5</option>
+      <option value="2">2</option>
+    </select>×
+  </label>
+</footer>
+
+<div id="loading">地形与底图加载中…</div>
+
+<script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+<script src="scenario.js"></script>
+<script src="march-log.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

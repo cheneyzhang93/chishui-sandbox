@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>四渡赤水作战沙盘 · 已搬到首页</title>
+<meta http-equiv="refresh" content="0; url=../">
+<script>
+  /* 格子棋从 /core/ 搬到站点根。这里是旧地址的兜底页 —— 静态托管跑不了
+     服务端重定向，改用页面跳转顶上，并把查询串（种子等）与锚点原样带到首页。
+     跳转目标写成相对的 ../ 而不是 /：项目站挂在子路径（/chishui-sandbox/）下，
+     绝对路径会把人送到域名根去。 */
+  location.replace('../' + location.search + location.hash);
+</script>
+</head>
+<body>
+<p>页面已搬到 <a href="../">首页</a>，正在跳转……</p>
+</body>
+</html>

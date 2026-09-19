@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>格子验证件 · 命令 → 结算 → 事件</title>
+<style>
+  :root{--bg:#12161c;--bg2:#1a2029;--line:#2c3947;--red:#c0392b;--blue:#3d7bb8;--gold:#ffd166}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:#e8eef5;
+    font:13px/1.55 "Microsoft YaHei","PingFang SC",system-ui,sans-serif}
+  body{display:flex;flex-direction:column}
+  button{background:#1b2530;color:#e8eef5;border:1px solid #33465a;border-radius:5px;
+    padding:6px 11px;font-size:12.5px;cursor:pointer;font-family:inherit}
+  button:hover:not(:disabled){background:#243141;border-color:#43607c}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.primary{background:#2a3a4d;border-color:#4d6f92;font-weight:600}
+  button.on{background:#3b4d2f;border-color:#6f9c4a;color:#d8f0b8}
+
+  .top{display:flex;align-items:center;gap:16px;padding:7px 16px;flex:0 0 auto;
+    border-bottom:1px solid var(--line);background:#0f141a}
+  .top .ttl{font:700 15px/1.25 "SimHei","Microsoft YaHei",sans-serif;letter-spacing:.5px;white-space:nowrap}
+  .top .ttl .chip{display:block;font:400 10.5px/1.4 "Microsoft YaHei",sans-serif;
+    color:#7d90a3;letter-spacing:0;font-weight:400}
+  .mission{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+  .mcard{flex:1;min-width:0;border:1px solid #2c3947;border-radius:6px;padding:4px 9px;background:#141a22}
+  .mcard .who{font:700 11.5px/1.4 "SimHei",sans-serif;margin-right:6px}
+  .mcard.red .who{color:#ff9d8f}
+  .mcard.blue .who{color:#9fd2ff}
+  .mcard .goal{font-size:11.5px;color:#cfdae6}
+  .mcard.done{border-color:#5f8a44;background:#1a2318}
+  .mcard.done .goal{color:#d8f0b8}
+  .score{flex:0 0 auto;text-align:center;line-height:1.1;padding:0 2px}
+  .score b{font:700 26px/1 "SimHei","Microsoft YaHei",sans-serif;color:var(--gold)}
+  .score .of{font-size:12px;color:#9fb0c2}
+  .score .left{display:block;font-size:10.5px;color:#7d90a3;margin-top:3px;white-space:nowrap}
+  .banner{flex:0 0 auto;font:700 14px/1.2 "SimHei",sans-serif;padding:6px 14px;border-radius:5px;display:none}
+  .banner.show{display:block}
+  .banner.red{background:#3a1c19;border:1px solid #8a3b31;color:#ffb3a8}
+  .banner.blue{background:#16283a;border:1px solid #38678f;color:#a9d3f5}
+
+  .app{display:grid;grid-template-columns:250px 1fr 322px;flex:1;min-height:0}
+  .app>*{min-height:0}
+  aside{overflow:auto}
+  /* 中栏不再整体滚动：棋盘吃掉结算表以外的全部高度，结算表钉在下面。
+     这样才能一屏看全 —— 格子尺寸由 sizeBoard 按 .board 自己的高度算，不替别的东西预留 */
+  main{display:flex;flex-direction:column;overflow:hidden;min-width:0}
+  aside{background:#141a22;padding:14px}
+  /* 左栏 = 操作台。上半段（单位 / 命令）可滚但正常高度下不滚，下半段（推进 / 重开 / 选项）
+     钉在栏底 —— 窗口再矮也够得到主按钮，且整栏不出滚动条。
+     查着看的资料（一分钟读懂 / 本件验证什么）都在右栏，不占操作台。
+     选择器一律带 aside：页眉比分行也用 .left（.score .left），不加限定会串味 */
+  aside.left{border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+  aside.left .stack{flex:1;min-height:0;overflow:auto}
+  aside.left .dock{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;
+    margin-top:10px;padding-top:12px;border-top:1px solid var(--line)}
+  aside.left .dock .orderstatus{margin:0}
+  .right{border-left:1px solid var(--line);display:flex;flex-direction:column}
+  .right>details{flex:0 0 auto}
+  section{margin-bottom:18px}
+  h3{margin:0 0 9px;font:700 12.5px/1.3 "SimHei",sans-serif;color:#b9c9d6;letter-spacing:.5px}
+  h3 .sub{font:400 11.5px/1.3 "Microsoft YaHei",sans-serif;color:#7d90a3;margin-left:6px}
+
+  .u{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid #2a3745;
+    border-radius:5px;margin-bottom:6px;cursor:pointer;background:#182029;font-size:12px}
+  .u:hover{border-color:#43607c}
+  .u.sel{border-color:var(--gold);background:#222b34}
+  .u .sw{width:11px;height:11px;border-radius:2px;background:var(--red);flex:0 0 11px}
+  .u .nm{font-weight:600}
+  .u .st{margin-left:auto;color:#8fa3b6;font-size:11px;text-align:right}
+  .u.gone{opacity:.45}
+  .u .ord{display:block;color:var(--gold);font-size:11px}
+
+  .orders{display:flex;flex-wrap:wrap;gap:6px}
+  .hintline{margin-top:9px;font-size:11.5px;color:#8fa3b6;min-height:32px}
+  .dock .row2{display:flex;gap:8px}
+  .dock .row2 button{flex:1}
+  .chk{display:flex;align-items:center;gap:7px;font-size:11.5px;color:#a9bccd;cursor:pointer}
+
+  .orderstatus{margin:0 0 8px;font-size:11.5px;color:#a9bccd;border:1px dashed #2f4054;
+    border-radius:5px;padding:6px 8px;background:#131a22}
+  .orderstatus.ok{border-style:solid;border-color:#4f7a3a;color:#d8f0b8}
+  .orderstatus.warn{border-color:#7a5f22;color:#f0dca8}
+
+  .rules ol{margin:0;padding-left:18px;font-size:11.5px;color:#b9c9d6;line-height:1.6}
+  .rules ol li{margin-bottom:5px}
+  .rules b{color:#ffd9a0}
+
+  /* 开局引导 / 结算画面：同一套浮层 */
+  .overlay{position:fixed;inset:0;z-index:50;background:rgba(8,11,15,.78);
+    display:flex;align-items:flex-start;justify-content:center;padding:26px 20px;overflow:auto}
+  .overlay[hidden]{display:none}
+  .sheet{width:min(700px,100%);background:#151c25;border:1px solid #33465a;border-radius:9px;
+    padding:20px 22px;box-shadow:0 18px 60px rgba(0,0,0,.6)}
+  .sheet .badge2{display:inline-block;font-size:10.5px;color:#9fb0c2;border:1px solid #33465a;
+    border-radius:99px;padding:2px 9px;margin-bottom:11px}
+  .sheet h2{margin:0 0 10px;font:700 19px/1.35 "SimHei","Microsoft YaHei",sans-serif;color:#e8eef5}
+  .sheet h2.ok{color:#b6f0c8}
+  .sheet h2.no{color:#a9d3f5}
+  .sheet .lede{margin:0 0 11px;font-size:13px;color:#dfe8f1}
+  .sheet .lede b{color:var(--gold)}
+  .sheet ol.steps{margin:0 0 11px;padding-left:20px;font-size:12.5px;color:#c9d6e2;line-height:1.65}
+  .sheet ol.steps li{margin-bottom:4px}
+  .sheet .med{margin:0 0 14px;font-size:12px;color:#8fa3b6;line-height:1.6}
+  .sheet .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .sheet .row .linkbtn{display:inline-block;background:#1b2530;border:1px solid #33465a;border-radius:5px;
+    padding:6px 11px;color:#cfe3f5;text-decoration:none;font-size:12.5px;line-height:1.55}
+  .sheet .row .linkbtn:hover{background:#243141;border-color:#43607c}
+  .keys{margin:0 0 12px;border-top:1px solid #2a3745;padding-top:10px}
+  .keys h4{margin:0 0 7px;font:700 12px/1.3 "SimHei",sans-serif;color:#b9c9d6}
+  .kev{font-size:12px;color:#c2cfdb;padding:3px 0 3px 8px;border-left:2px solid #2a3745;margin-bottom:3px}
+  .kev-combat{border-left-color:#c0392b;color:#ffc9c0}
+  .kev-loss{border-left-color:#8a3b31;color:#ffab9d}
+  .kev-exit{border-left-color:#4f9c6a;color:#b6f0c8}
+  .kev-intel{border-left-color:#6a5acd;color:#cfc7ff}
+  .kev .t{color:#6f8398;margin-right:6px;font-family:ui-monospace,Consolas,monospace}
+
+  .board{flex:1;min-height:0;padding:14px 14px 0;overflow:auto}
+  canvas{display:block;margin:0 auto;border:1px solid var(--line);border-radius:6px;
+    background:#0e1319;cursor:pointer}
+  .board .cap{margin:7px 0 0;font-size:11px;color:#7d90a3;text-align:center}
+
+  /* 结算表收成一行：它是查表用的参考页，占着一屏高度不划算。
+     交战时【不】自动展开 —— 展开会从棋盘嘴里抢走约 260px，格子当场缩一圈；
+     改成把最新战果直接写在这一行上，表格只在手动点开时才占地方 */
+  details.crt{flex:0 0 auto;margin:12px 14px 14px;border:1px solid var(--line);border-radius:6px;
+    background:#151c25;padding:7px 12px}
+  details.crt>summary{cursor:pointer;font:700 12px/1.5 "SimHei",sans-serif;color:#b9c9d6;list-style:none}
+  details.crt>summary::-webkit-details-marker{display:none}
+  details.crt>summary::before{content:'▸ ';color:#7d90a3}
+  details.crt[open]>summary::before{content:'▾ '}
+  details.crt[open]>summary{margin-bottom:8px}
+  details.crt>summary .now{font:400 11.5px/1.5 "Microsoft YaHei",sans-serif;color:#8fa3b6;margin-left:10px}
+  details.crt>summary .now.hot{color:#ffd9a0}
+  details.rules>summary .sub{font:400 11px/1.4 "Microsoft YaHei",sans-serif;color:#7d90a3}
+  table{border-collapse:collapse;font-size:11px;width:100%}
+  th,td{border:1px solid #2a3745;padding:3px 4px;text-align:center;color:#c9d6e2}
+  th{background:#1b2430;color:#8fa3b6;font-weight:400}
+  td.rc{background:#1a212a;color:#8fa3b6}
+  td.hit{outline:2px solid var(--gold);outline-offset:-2px;background:#2b3648;color:#fff;font-weight:700}
+  td.A2,td.A1{color:#ff9d8f}
+  td.D1,td.D2{color:#9fd2ff}
+  td.X{color:#ffd166;font-weight:700}
+  .crt .note{margin:8px 0 0;font-size:10.5px;color:#7d90a3;line-height:1.6}
+
+  #log{flex:1;overflow:auto;border:1px solid var(--line);border-radius:6px;
+    background:#10161e;padding:7px 9px;font-size:11.5px;line-height:1.6;min-height:200px}
+  #log a.pl{color:#9fd2ff;text-decoration:none;border-bottom:1px dotted #4a5b6b}
+  #log a.pl:hover{color:#fff;border-bottom-color:#9fd2ff}
+
+  .jump{margin-bottom:10px}
+  .jump a{display:inline-block;background:#1b2530;border:1px solid #33465a;border-radius:5px;
+    padding:6px 11px;color:#cfe3f5;text-decoration:none;font-size:12.5px}
+  .jump a:hover{background:#243141;border-color:#43607c}
+  .jump .s{display:block;margin-top:4px;font-size:10.5px;color:#7d90a3;line-height:1.5}
+  .ev{padding:2px 0 2px 7px;border-left:2px solid #2a3745;margin-bottom:3px;color:#c2cfdb}
+  .ev .clk{color:#6f8398;margin-right:6px;font-family:ui-monospace,Consolas,monospace}
+  .ev-move{border-left-color:#4d6f92}
+  .ev-contact{border-left-color:#e0a63c;color:#ffe0a8}
+  .ev-combat{border-left-color:#c0392b;color:#ffc9c0}
+  .ev-loss{border-left-color:#8a3b31;color:#ffab9d}
+  .ev-exit{border-left-color:#4f9c6a;color:#b6f0c8;font-weight:600}
+  .ev-intel{border-left-color:#6a5acd;color:#cfc7ff}
+  .ev-order{border-left-color:#2a3745;color:#93a5b6}
+  .ev-turn{border-left-color:#3c4d5f;color:#8fa3b6;font-style:italic}
+  .ev-end{border-left-color:var(--gold);color:var(--gold);font-weight:700}
+  .ev .t{color:#6f8398;margin-right:5px}
+  /* 结算回放演到哪一条就点亮哪一条：只动颜色不动尺寸，免得播报栏自己跳 */
+  .ev.lit{background:rgba(255,209,102,.13);border-left-color:var(--gold);color:#fff;
+    transition:background .15s linear,border-left-color .15s linear}
+
+  /* 窄窗口：三栏会把棋盘挤成一条，改成棋盘独占一行 */
+  @media (max-width:1180px){
+    html,body{overflow:auto;height:auto}
+    body{display:block}
+    .top{flex-wrap:wrap}
+    .mission{order:3;flex-basis:100%;flex-wrap:wrap}
+    .app{grid-template-columns:1fr;height:auto}
+    /* 单栏时中栏不再独占一屏：还原成普通块，整页一起滚，棋盘只受宽度约束 */
+    main{display:block;overflow:visible}
+    .board{flex:none;overflow:visible}
+    details.crt{margin:12px 14px}
+    aside{overflow:visible}
+    /* 单栏时左栏还原成普通块：不再钉底、不再内滚，整页一起滚 */
+    aside.left{display:block;overflow:visible}
+    aside.left .stack{overflow:visible}
+    aside.left .dock{margin-top:18px;padding-top:0;border-top:0}
+    aside.left{border-right:0;border-bottom:1px solid var(--line)}
+    .right{border-left:0;border-top:1px solid var(--line)}
+    #log{max-height:360px}
+    .board{padding-bottom:0}
+  }
+
+  details{margin-top:12px;font-size:11.5px;color:#9fb0c2}
+  details summary{cursor:pointer;color:#b9c9d6;font-weight:600;margin-bottom:7px}
+  details p{margin:0 0 7px}
+  details b{color:#ffc9c4}
+  details ul{margin:0 0 8px;padding-left:17px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="ttl">格子验证件 · 命令 → 结算 → 事件<span class="chip">验证件 · 非成品，不构成史实结论</span></div>
+  <div class="mission">
+    <div class="mcard red" id="missionRed" title="地图最左一列 = 西岸脱离区，只有两处渡口能过赤水河；过不去就判负。全队 3 个，任务线是「主力过河」—— 送过去 2 个就算达成（战史上这对应主力脱险）；剩下 1 个留在东岸牵制敌人，是本仗的代价，不算失败。">
+      <span class="who">红军（你）</span><span class="goal">8 个回合内送 <b>2</b> 个主力渡河（全队 3 个）</span>
+    </div>
+    <div class="score">
+      <b id="exitLabel">0</b><span class="of">/2 主力渡河</span>
+      <span class="left" id="turnsLeftLabel">剩 8 回合</span>
+      <span class="left">第 <b id="turnLabel">1</b> 回合 · <span id="clockLabel">04:00</span> · 种子 <b id="seedNow">7</b></span>
+    </div>
+    <div class="mcard blue" id="missionBlue" title="红军渡河不足 2 个，蓝军就赢。它由电脑指挥：两个单位分别守在两处渡口的东岸口子上，第三个人当预备队，按情报往红军更逼近的那处补。直着撞口子推不开；把预备队骗到另一边，另一处就空了。">
+      <span class="who">蓝军（对手）</span><span class="goal">堵住两处渡口，拖满 8 个回合</span>
+    </div>
+  </div>
+  <div class="banner" id="banner"></div>
+</header>
+
+<div class="app">
+
+  <aside class="left">
+    <div class="stack">
+      <section>
+        <h3>红方单位<span class="sub">（点选后下令）</span></h3>
+        <div id="unitList"></div>
+      </section>
+
+      <section>
+        <h3>命令<span class="sub" id="selName">未选中</span></h3>
+        <div class="orders">
+          <button data-order="move">移动</button>
+          <button data-order="hold">固守</button>
+          <button data-order="recon">侦察</button>
+          <button data-order="attack">攻击</button>
+          <button data-order="withdraw">脱离</button>
+        </div>
+        <div class="hintline" id="hintLine">先点地图上的红军单位，再下命令。</div>
+      </section>
+    </div>
+
+    <!-- 操作台下半段钉在栏底：窗口再矮也够得到「推进一回合」 -->
+    <div class="dock">
+      <div class="orderstatus" id="orderStatus">正在载入……</div>
+      <button id="resolveBtn" class="primary">推进一回合</button>
+      <div class="row2">
+        <button id="resetBtn">重开</button>
+        <button id="clearBtn">清空命令</button>
+      </div>
+      <button id="guideBtn">一分钟上手（三步）</button>
+      <label class="chk"><input type="checkbox" id="autoChk">红方交 AI（只看循环，不动手）</label>
+      <label class="chk"><input type="checkbox" id="fogChk" checked>显示红军侦察范围</label>
+      <!-- 等时圈：把「时间-距离」画出来 —— 渡口是瓶颈、绕山脊有多贵，一眼看见 -->
+      <div class="chk" title="从现在起 N 小时，按地形代价（真实坡度）能走到哪；渡口是硬约束。选中某个单位时只看它，否则看全体红军。">
+        <input type="checkbox" id="reachChk"><span>可达</span><input id="reachRange" type="range" min="2" max="12" step="2" value="6" style="flex:1;accent-color:#ffd166"><b id="reachLabel" style="color:var(--gold);white-space:nowrap">6 小时</b>
+      </div>
+      <div class="chk"><span>种子</span><input id="seedRange" type="range" min="1" max="99" value="7" style="flex:1;accent-color:#ffd166"><b id="seedLabel" style="color:var(--gold)">7</b></div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="board">
+      <canvas id="grid"></canvas>
+      <p class="cap">1 格 ≈ 4.7 × 4.0 km · 赤水河仅两处可渡 · 第 0 列为西岸脱离区 · 经纬度落点为示意（对齐土城 / 元厚 / 浑溪口三处，误差 1—2 km，见 core/grid-geo.js）<br>地图上：<b style="color:rgba(255,123,110,.95)">彩色实线</b> = 实际行军轨迹 · <b style="color:rgba(255,209,102,.85)">金色虚线</b> = 下过但没走到的计划 · <b style="color:rgba(120,180,240,.85)">蓝色虚线框「?」</b> = 最后已知位置（<b style="color:rgba(255,209,102,.9)">金色箭头</b> = 它最后朝哪个方向去）<br>看不见的蓝军不画线、不进播报 —— 它的行军只留在「最后已知位置」上</p>
+    </div>
+    <details class="crt" id="crtBox">
+      <summary>战斗结算表（CRT）<span class="now" id="crtNow">尚未发生交战。</span></summary>
+      <table id="crtTable"></table>
+      <p class="note" id="crtNote">读法：左列 1d6 × 上方 攻守有效兵力比；红字对攻方不利，蓝字对守方不利。有效兵力 = 兵力当量 ×（0.55 + 0.045 × 士气）×（1 − 0.06 × 疲劳），守方另乘地形系数（山地 / 隘口 / 城镇 +12% ~ +36%）。</p>
+    </details>
+  </main>
+
+  <aside class="right">
+    <div class="jump">
+      <a id="mapLink" href="samples/four-crossings.html" target="_blank" rel="noopener">在真实地图上看这一局 →</a>
+      <span class="s" id="jumpNote">地图页把格网叠到真实地形上，按种子复现同一局。</span>
+      <a id="replayLink" href="replay/" target="_blank" rel="noopener">看 90 秒样片回放（土城 → 一渡）→</a>
+      <span class="s">就是原来首页那支样片：从土城受挫到一渡赤水的 90 秒时间轴，带史料与行军日志两块面板。</span>
+    </div>
+    <h3>播报<span class="sub">（地名可点，跳到地图对应位置）</span></h3>
+    <div id="log"></div>
+
+    <!-- 规则与「验证什么」都是查着看的资料，收成一行放右栏；左栏让给操作 -->
+    <details class="rules" id="rules">
+      <summary>一分钟读懂<span class="sub"> 7 条规则 —— 目标 / 一个回合 / 移动 / 攻击 / 侦察 / 结算 / 疲劳</span></summary>
+      <ol>
+        <li><b>目标</b>：红军 8 个回合内送 <b>2</b> 个单位进最左一列（西岸脱离区）；送不到，蓝军胜。<br>
+          全队是 <b>3</b> 个 —— 任务线只是「主力过河」（历史上此役的目标就是主力脱险）。剩下 1 个留在东岸是本仗的代价，
+          结算里会点名是谁；把 3 个全送过去则照实报「一个不少」（8 个回合内极难做到）。</li>
+        <li><b>一个回合</b>：给每个红军单位下令 → 点「推进一回合」→ 双方同时结算 → 右栏播报。<br>
+          结算会<b>一条一条演出来</b>：谁先动、谁撞上谁、哪一格打起来（棋盘闪光 + CRT 那一格亮）、谁掉了兵，
+          演到哪条就点亮右栏哪条播报；不想等就<b>点棋盘（或那个「点此跳过」的按钮）</b>直接看结果。</li>
+        <li><b>移动</b>：每单位 3 点机动，走一格按地形扣 1—3 点（坡越陡越贵；渡口固定 3、隘口 ≥2、城镇 1）；<b>赤水河不可通行，只有两处渡口能过</b>。<br>
+          下令时画的金线就是它这回合的行军路线（实线 = 本回合走到，虚线 = 预告的后续）；<b>引擎按这条线走</b>，
+          只有路被占住才改道或停下，且右栏播报会写明原因（到不了的目标格会当场拒收命令）。</li>
+        <li><b>攻击</b>：只能打相邻且<b>已发现</b>的敌军；下攻击命令的这回合不移动，等于用一步换一次交战。</li>
+        <li><b>侦察</b>：基础视野 3 格（曼哈顿距离），站在非平地形（隘口 / 城镇 / 渡口 / 山地）再 +1，当回合下「侦察」命令再 +2；看不见的敌人不能打。<br>
+          <b>看不见就不知道</b>：蓝军一旦脱离你的视野，地图上只留一个蓝色虚线框「?」——几回合前的位置，外加一个金色箭头指它最后朝哪走（只给方向，不给速度）。它的行军不进播报、不留实况线，直到你再看见它、或它打到你眼前。</li>
+        <li><b>结算</b>：1 颗 1d6 × 攻守有效兵力比 → 查中栏战斗结算表（CRT，点标题展开）得 A2/A1/E/D1/D2/X。</li>
+        <li><b>疲劳</b>：连续机动累积疲劳、削弱有效兵力；原地不动会恢复。</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>本件验证什么 / 不做什么</summary>
+      <p><b>验证的是循环</b>：读情报 → 下命令 → 双方同时结算 → 出事件 → 播报。跑通了，才谈得上「游戏底座」。</p>
+      <p><b>不做什么</b>：棋盘本身仍不接真实地图、兵力量化为抽象当量、番号为占位符（红1/蓝1）；这不是史实推演，也不构成战史结论，不得对外发布。经纬度只在 <code>core/grid-geo.js</code> 里做一次**示意**映射，供地图页叠格网用 —— 格网是作战分区，不是真实境界。</p>
+      <p><b>已知简化</b>（都是下一步要还的债）：</p>
+      <ul>
+        <li>机动按「红先蓝后」顺序结算，不是真正的同步解算（真 WEGO 要冻结同一快照 + 冲突仲裁）—— 两处渡口东岸都只有一格宽，红方先动就先占。</li>
+        <li>蓝方是「守口 + 预备队」的简化决策：两个单位按最近原则分派到两处渡口的东岸口子（上回合守哪、这回合续任，免得来回换位），第三个人当预备队，按军级情报往红军更逼近的那处渡口补 —— 没有上帝视角，只认自己看见的。红方 AI 是「主队 + 诱饵」：一个单位明着朝另一处渡口去（只摆样子、不开火）把预备队钉在错的方向，主队再打防守弱的那一处。都不是完整的指挥模型。</li>
+        <li>侦察是一个曼哈顿半径，「最后已知位置」不做概率衰减；动向只给方向，不给速度与兵力。</li>
+      </ul>
+      <p><b>已接上</b>：地图页 <code>?game=种子</code> 把格网叠到真实地形上并按本局回放（<code>core/grid-geo.js</code> 落点 + <code>core/replay.js</code> 快照与日志）；<code>state.log</code> 每条事件都带结构化字段，按《行军日志字段表》产出 <code>simLog</code>（见该表 §1.1）。</p>
+      <p><b>下一步</b>：把「红先蓝后」换成真正的同步解算；情报加概率衰减与上报延迟；把 AI 从「规则表」换成按任务分解的指挥官模型。</p>
+    </details>
+  </aside>
+</div>
+
+<div class="overlay" id="guide" hidden>
+  <div class="sheet">
+    <div class="badge2">验证件 · 一分钟上手</div>
+    <h2>这是一盘「命令 → 结算 → 播报」的格子棋</h2>
+    <p class="lede">你是红军指挥官。<b>目标：8 个回合内把 2 个单位送过赤水河</b>——地图最左一列是西岸脱离区，只有两处渡口能过河；送不到就判负。<br>
+      全队 3 个，任务线是「主力过河」：送过去 2 个就算达成，剩下 1 个（在东岸牵制敌人的那一路）留在东岸是本仗的代价 —— 结算会点名是谁。</p>
+    <ol class="steps">
+      <li><b>点一个红军单位</b>（地图上的红棋子，或左栏列表）。没下令的单位会被金色虚线圈住。</li>
+      <li><b>点「移动」再点目标格</b>；不想动就点「固守 / 侦察 / 攻击 / 脱离」。</li>
+      <li><b>点「推进一回合」</b>——双方同时结算，右栏播报会一条一条亮起来演给你看（点棋盘可跳过）。</li>
+    </ol>
+    <p class="med">不想先动脑也行：什么都不下令直接「推进一回合」，看蓝军怎么堵你；或者勾「红方交 AI」，先看一局完整的循环。</p>
+    <div class="row">
+      <button class="primary" id="guideOk">开始指挥</button>
+      <button id="guideAI">红方也交给 AI，先看一局</button>
+      <button id="guideRules">完整规则在哪？</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="result" hidden>
+  <div class="sheet">
+    <div class="badge2" id="resultBadge">验证件 · 本局结果</div>
+    <h2 id="resultTitle">本局结果</h2>
+    <p class="lede" id="resultWhy"></p>
+    <div class="keys">
+      <h4>关键三件事</h4>
+      <div id="resultEvents"></div>
+    </div>
+    <p class="med" id="resultNote"></p>
+    <div class="row">
+      <button class="primary" id="againBtn">换个种子再来一局</button>
+      <button id="retryBtn">同种子再打一次</button>
+      <a class="linkbtn" id="resultLink" href="samples/four-crossings.html" target="_blank" rel="noopener">看这一局的回放 →</a>
+      <button id="closeResult">关掉，看棋盘</button>
+    </div>
+  </div>
+</div>
+
+<script src="core/terrain-cost.js"></script>
+<script src="core/engine.js"></script>
+<script src="core/grid-geo.js"></script>
+<script src="core/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,1154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>样张 ② 四渡赤水态势总览 · 2D「之」字</title>
+<link href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet"/>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0b0f14;
+    font:13px/1.5 "Microsoft YaHei","PingFang SC",system-ui,sans-serif;color:#e8eef5}
+  #map{position:absolute;inset:0}
+
+  .panel{position:absolute;top:14px;left:14px;width:318px;z-index:5;
+    background:rgba(10,14,19,.9);border:1px solid #23303d;border-radius:8px;
+    padding:14px 14px 12px;backdrop-filter:blur(6px);
+    box-shadow:0 14px 34px rgba(0,0,0,.5)}
+  .panel h1{margin:0 0 3px;font:700 16px/1.35 "SimHei","Microsoft YaHei",sans-serif;letter-spacing:.6px}
+  .panel .sub{margin:0 0 12px;font-size:11.5px;color:#8b9dae}
+
+  .row{display:flex;align-items:center;gap:9px;margin:9px 0}
+  .row label{font-size:12px;color:#a9bccd;min-width:52px}
+  input[type=range]{flex:1;accent-color:#ffb74d;height:16px}
+  select{flex:1;background:#131a22;color:#dbe6f0;border:1px solid #2c3a48;
+    border-radius:4px;padding:4px 6px;font-size:12px}
+  .val{font-size:11.5px;color:#ffd166;min-width:46px;text-align:right}
+
+  button{background:#1b2530;color:#e8eef5;border:1px solid #33465a;border-radius:5px;
+    padding:6px 12px;font-size:12.5px;cursor:pointer;font-family:inherit}
+  button:hover{background:#243141;border-color:#43607c}
+  button.primary{background:#2a3a4d;border-color:#4d6f92;font-weight:600}
+
+  .seg{display:flex;flex:1;border:1px solid #33465a;border-radius:5px;overflow:hidden}
+  .seg button{flex:1;border:0;border-radius:0;padding:6px 8px;background:#131a22;font-size:12.5px}
+  .seg button + button{border-left:1px solid #33465a}
+  .seg button:hover{background:#243141}
+  .seg button.on{background:#2a3a4d;color:#ffd166;font-weight:600}
+
+  .steps{margin:12px 0 4px;padding:9px 0 0;border-top:1px solid #22303d}
+  .step{display:flex;align-items:center;gap:9px;padding:3px 0;font-size:12px;
+    color:#6f8398;transition:color .2s}
+  .step.on{color:#e8eef5}
+  .step .sw{width:20px;height:3px;border-radius:2px;background:currentColor;opacity:.35}
+  .step.on .sw{opacity:1}
+  .step .d{margin-left:auto;font-size:11px;color:#8b9dae}
+  .step.on .d{color:#c3d3e2}
+
+  .bar{height:3px;background:#1b2530;border-radius:2px;margin:9px 0 2px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff5b52,#ffb74d,#4fc3f7,#ba68c8)}
+
+  .legend{margin:10px 0 0;padding:9px 0 0;border-top:1px solid #22303d;
+    font-size:11.5px;color:#93a5b6;line-height:1.7}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:middle;margin-right:5px}
+  .dot.ferry{background:#7fe7ff;box-shadow:0 0 0 2px rgba(127,231,255,.25)}
+  .dot.place{background:#dfe6ee}
+  .dot.tbd{background:#ffd166;box-shadow:0 0 0 2px rgba(255,209,102,.25)}
+  .ln{display:inline-block;width:18px;height:2px;border-radius:1px;background:#54d6e8;
+    vertical-align:middle;margin:0 5px 2px 0}
+  .tx{display:inline-block;font-size:11px;color:#a9bcc9;border-bottom:1px dotted #4a5b6b;
+    padding:0 2px;margin:0 5px 0 0}
+  .foot{margin:11px 0 0;padding:9px 0 0;border-top:1px solid #22303d;
+    font-size:11px;color:#8b9dae;line-height:1.65}
+  .foot b{color:#ffc9c4}
+
+  .now{position:absolute;top:16px;right:16px;z-index:5;
+    background:rgba(10,14,19,.9);border:1px solid #23303d;border-radius:8px;
+    padding:11px 15px;min-width:186px;backdrop-filter:blur(6px)}
+  .now .k{font-size:11px;color:#8b9dae;letter-spacing:.5px}
+  .now .n{font:700 22px/1.25 "SimHei","Microsoft YaHei",sans-serif;letter-spacing:1px;margin:2px 0 1px}
+  .now .d{font-size:12px;color:#c3d3e2}
+
+  .hint{position:absolute;right:16px;bottom:14px;z-index:5;background:rgba(10,14,19,.78);
+    border:1px solid #23303d;border-radius:6px;padding:6px 11px;font-size:11.5px;color:#8b9dae}
+
+  /* ===== 推演回放（?game=<种子>）：格子验证件叠到真实地图上 ===== */
+  .rp{position:absolute;right:16px;bottom:58px;width:302px;z-index:5;
+    display:flex;flex-direction:column;max-height:calc(100vh - 210px);
+    background:rgba(10,14,19,.92);border:1px solid #23303d;border-radius:8px;
+    padding:11px 12px 10px;backdrop-filter:blur(6px);box-shadow:0 14px 34px rgba(0,0,0,.5)}
+  .rp[hidden]{display:none}
+  .rp-h{font:700 13.5px/1.4 "SimHei","Microsoft YaHei",sans-serif;letter-spacing:.4px}
+  .rp-h span{font:400 11px/1.4 "Microsoft YaHei",sans-serif;color:#ffd166;margin-left:6px}
+  .rp-m{margin:4px 0 8px;font-size:11px;color:#8b9dae;line-height:1.6}
+  .rp-c{display:flex;gap:6px;margin-bottom:8px}
+  .rp-c button{flex:1;padding:5px 4px;font-size:11.5px}
+  .rp-c button:disabled{opacity:.4;cursor:not-allowed}
+  .rp-t{font-size:12px;color:#ffd166;font-weight:600;margin-bottom:5px}
+  .rp-log{flex:1;min-height:92px;overflow:auto;border:1px solid #22303d;border-radius:5px;
+    background:rgba(6,9,14,.6);padding:6px 8px;font-size:11px;line-height:1.62}
+  .ev2{padding:1px 0 1px 6px;border-left:2px solid #2a3745;margin-bottom:3px;color:#c2cfdb}
+  .ev2 .clk{color:#6f8398;margin-right:5px;font-family:ui-monospace,Consolas,monospace}
+  .ev2.k-combat,.ev2.k-loss{border-left-color:#c0392b;color:#ffc9c0}
+  .ev2.k-contact{border-left-color:#e0a63c;color:#ffe0a8}
+  .ev2.k-exit{border-left-color:#4f9c6a;color:#b6f0c8}
+  .ev2.k-intel{border-left-color:#6a5acd;color:#cfc7ff}
+  .ev2.k-turn{border-left-color:#3c4d5f;color:#8fa3b6;font-style:italic}
+  .ev2 .pl,.rp-back{color:#9fd2ff}
+  .ev2 .pl{cursor:pointer;border-bottom:1px dotted #4a5b6b}
+  .ev2 .pl:hover{color:#d6ecff}
+  .rp-back{display:block;margin-top:8px;font-size:11px;text-decoration:none;
+    border-top:1px solid #22303d;padding-top:8px}
+  .rp-back:hover{text-decoration:underline}
+  .ln.dash{background:repeating-linear-gradient(90deg,#ffd166 0 5px,rgba(255,209,102,0) 5px 8px)}
+  .ln.goal{background:none;border:1.5px dashed #ffd166;height:9px;width:15px;border-radius:2px}
+  .ct{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;
+    margin:0 4px 1px 0;border:1px solid rgba(255,255,255,.5)}
+  .ct.red{background:#c0392b}
+  .ct.blue{background:#3d7bb8}
+  #toast{position:absolute;left:50%;bottom:60px;transform:translateX(-50%);z-index:6;
+    background:rgba(10,14,19,.92);border:1px solid #3a4c5e;border-radius:6px;padding:6px 12px;
+    font-size:11.5px;color:#e8eef5;opacity:0;transition:opacity .25s;pointer-events:none}
+  #toast.on{opacity:1}
+  #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:#0b0f14;z-index:9;font-size:13px;color:#8b9dae;transition:opacity .5s}
+  #loading.off{opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div class="panel">
+  <h1>四渡赤水 · 态势总览</h1>
+  <p class="sub">1935 年 1 月 19 日 — 3 月 22 日 · 中央红军</p>
+
+  <div class="row">
+    <label>视图</label>
+    <div class="seg">
+      <button id="v2d" class="on">2D 平视</button>
+      <button id="v3d">3D 斜视</button>
+    </div>
+  </div>
+  <div class="row">
+    <label>俯仰</label>
+    <input id="pitch" type="range" min="0" max="65" step="1" value="0">
+    <span class="val" id="pitchVal">0° 2D</span>
+  </div>
+  <div class="row">
+    <label>底图</label>
+    <select id="basemap">
+      <option value="img">卫星影像</option>
+      <option value="dark">深色晕渲</option>
+    </select>
+  </div>
+  <div class="row">
+    <button id="play" class="primary">▶ 逐步演示</button>
+    <button id="replay">重播</button>
+  </div>
+
+  <div class="bar"><i id="bar"></i></div>
+
+  <div class="steps" id="steps"></div>
+
+  <div class="legend">
+    <span class="dot ferry"></span>渡口　<span class="dot place"></span>城镇 / 关隘　
+    <span class="dot tbd"></span>位置待核　<span class="ln"></span>赤水河<br>
+    灰色小字 <span class="tx">示例</span>为现代地名，仅作定位参照（放大后分级显示）<br>
+    实线为渡河后的主要行军方向（示意）<br>
+    ②④ 两次均由太平渡 / 二郎滩 / 九溪口西渡，图上两条线在这一段重叠
+  </div>
+
+  <div class="legend" id="gridLegend" hidden>
+    <span class="ln dash"></span>示意格网（12 列 × 9 行，每格 ≈ 4.7 × 4.0 km）<br>
+    <span class="ln goal"></span>金圈格 = 渡河脱离目标（(1,2) 元厚渡口 / (1,5) 土城渡口）<br>
+    <span class="ct red"></span><span class="ct blue"></span>推演棋子（红1 / 蓝1 为占位，非真实番号）<br>
+    格网是作战分区，不代表真实境界；回放为裁判视角，双方棋子都显示<br>
+    ①②③④ 为 1935 年四渡路线（示意），与格网推演不是同一场
+  </div>
+
+  <div class="foot">
+    出处：四渡总体时段与渡口依《专家解析四渡赤水》（当代传播）；一渡 1 月 29 日、土城会议与青杠坡战斗依《红军长征在贵州》系列报道·第十期。<br>
+    <b>路线走向与渡口坐标均为示意，待行军日志级标定</b>；虚线为渡河之外的集结转移，不计入四渡。<br>
+    赤水河河道几何与灰色现代地名来自 © OpenStreetMap 贡献者（ODbL）——河道为真实几何，仅作定位参照，不代表 1935 年河道。
+  </div>
+</div>
+
+<div class="now">
+  <div class="k">当前阶段</div>
+  <div class="n" id="nowName">—</div>
+  <div class="d" id="nowDate">点击「逐步演示」开始</div>
+</div>
+
+<div class="rp" id="rp" hidden>
+  <div class="rp-h">推演回放<span id="rpSeed"></span></div>
+  <div class="rp-m" id="rpMeta">—</div>
+  <div class="rp-c">
+    <button id="rpPrev">◀ 上一回合</button>
+    <button id="rpPlay">▶ 自动播放</button>
+    <button id="rpNext">下一回合 ▶</button>
+  </div>
+  <div class="rp-t" id="rpTurn">—</div>
+  <div class="rp-log" id="rpLog"></div>
+  <a class="rp-back" id="rpBack" href="../index.html">← 回到格子件，同一局继续下令</a>
+</div>
+
+<div id="toast"></div>
+<div class="hint">拖拽平移 · 滚轮缩放 · 点左上「2D 平视 / 3D 斜视」一键切换，或拖动「俯仰」滑杆</div>
+<div id="loading">正在加载底图与地形…</div>
+
+<script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+<script src="../core/terrain-cost.js"></script>
+<script src="../core/engine.js"></script>
+<script src="../core/grid-geo.js"></script>
+<script src="../core/replay.js"></script>
+<script src="chishui-geo.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ================= 数据：四渡与一次集结转移 ================= */
+  const LEGS = [
+    {
+      id: 'L1', badge: '①', name: '一渡赤水', date: '1935.1.29', color: '#ff5b52',
+      dir: '西渡入川南：土城 → 古蔺 → 叙永',
+      badgeAt: [105.56, 28.13],
+      coords: [[106.00,28.29],[105.90,28.24],[105.81,28.04],[105.66,28.06],[105.52,28.12],[105.44,28.17]]
+    },
+    {
+      id: 'S0', badge: '·', name: '扎西集结', date: '2月上旬', color: '#8b9dae', dash: true, quiet: true,
+      dir: '渡河之外的集结转移（非渡河段）',
+      badgeAt: [105.24, 27.99],
+      coords: [[105.44,28.17],[105.24,28.02],[105.05,27.84]]
+    },
+    {
+      id: 'L2', badge: '②', name: '二渡赤水', date: '1935.2.18–21', color: '#ffb74d',
+      dir: '回师东进：太平渡 / 二郎滩 / 九溪口 → 桐梓 → 娄山关 → 遵义',
+      badgeAt: [106.60, 28.10],
+      coords: [[105.05,27.84],[105.28,27.92],[105.55,27.99],[105.81,28.04],[105.86,28.26],[105.92,28.24],[105.98,28.22],[106.30,28.15],[106.60,28.16],[106.83,28.13],[106.86,28.02],[106.92,27.73]]
+    },
+    {
+      id: 'L3', badge: '③', name: '三渡赤水', date: '1935.3.16–17', color: '#4fc3f7',
+      dir: '再向西北：遵义 → 茅台渡口 → 古蔺、叙永方向',
+      badgeAt: [106.58, 27.80], labelLeft: true,
+      coords: [[106.92,27.73],[106.70,27.78],[106.52,27.82],[106.36,27.85],[106.15,27.95],[105.95,28.00],[105.81,28.04],[105.66,28.08],[105.50,28.14],[105.44,28.17]]
+    },
+    {
+      id: 'L4', badge: '④', name: '四渡赤水', date: '1935.3.21–22', color: '#ba68c8',
+      dir: '秘密折回东向，南渡乌江：二郎滩 / 九溪口 / 太平渡 → 乌江',
+      badgeAt: [106.28, 27.74],
+      coords: [[105.44,28.17],[105.66,28.10],[105.81,28.04],[105.87,28.24],[105.93,28.21],[105.99,28.20],[106.10,28.00],[106.25,27.75],[106.45,27.50],[106.65,27.28],[106.85,27.12]]
+    }
+  ];
+
+  /* off = [向右, 向上] 的标签位移（像素）。赤水河渡口在这一带挤成一团，逐个散开。 */
+  const PLACES = [
+    { name: '遵义',     lonlat: [106.92, 27.73], kind: 'city',  off: [22, -14] },
+    { name: '娄山关',   lonlat: [106.86, 28.02], kind: 'pass'  },
+    { name: '桐梓',     lonlat: [106.83, 28.13], kind: 'city'  },
+    { name: '茅台渡口', lonlat: [106.36, 27.85], kind: 'ferry' },
+    { name: '土城',     lonlat: [106.00, 28.29], kind: 'ferry', off: [56, 14] },
+    { name: '元厚',     lonlat: [105.90, 28.42], kind: 'ferry', off: [40, 22] },
+    { name: '浑溪口',   lonlat: [105.98, 28.31], kind: 'ferry', tbd: true, off: [-56, 42] },
+    { name: '二郎滩',   lonlat: [105.86, 28.26], kind: 'ferry', off: [-56, 4] },
+    { name: '九溪口',   lonlat: [105.93, 28.24], kind: 'ferry', tbd: true, off: [6, -34] },
+    { name: '太平渡',   lonlat: [105.98, 28.22], kind: 'ferry', off: [58, -20] },
+    { name: '古蔺',     lonlat: [105.81, 28.04], kind: 'city'  },
+    { name: '叙永',     lonlat: [105.44, 28.17], kind: 'city'  },
+    { name: '扎西',     lonlat: [105.05, 27.84], kind: 'city',  off: [16, -12] },
+    { name: '乌江（南渡方向）', lonlat: [106.85, 27.12], kind: 'city', tbd: true, off: [-14, 16] }
+  ];
+
+  const COLOR = { city: '#dfe6ee', pass: '#ffd166', ferry: '#7fe7ff' };
+  const TBD = '#ffd166';
+
+  /* ================= 画布图标（无 glyphs，中文一律走 canvas） ================= */
+  const PR = 2;
+  const meas = document.createElement('canvas').getContext('2d');
+  const FONT = '700 12px "Microsoft YaHei","PingFang SC",sans-serif';
+
+  function cvs(w, h) { const c = document.createElement('canvas'); c.width = w * PR; c.height = h * PR; return c; }
+  function toData(c) { return c.getContext('2d').getImageData(0, 0, c.width, c.height); }
+  function roundRect(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
+    g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
+    g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y);
+    g.closePath();
+  }
+
+  function makeChip(text, opt) {
+    opt = opt || {};
+    const color = opt.color || '#e8e8e8';
+    const fs = opt.fs || 12, padX = opt.padX || 8, padY = opt.padY || 5;
+    meas.font = FONT;
+    const w = Math.ceil(meas.measureText(text).width + padX * 2);
+    const h = Math.ceil(fs + padY * 2);
+    const c = cvs(w, h), g = c.getContext('2d');
+    g.scale(PR, PR);
+    roundRect(g, 0.75, 0.75, w - 1.5, h - 1.5, 3);
+    g.fillStyle = opt.bg || 'rgba(6,9,14,.78)';
+    g.fill();
+    if (opt.dashed) g.setLineDash([3, 2]);
+    g.lineWidth = 1.5; g.strokeStyle = color; g.stroke();
+    g.setLineDash([]);
+    g.fillStyle = color; g.font = FONT;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(text, w / 2, h / 2 + 0.5);
+    return c;
+  }
+
+  /* 带位移的标签：把 chip 画进一张更大的画布，锚点仍在画布底边中点。
+     这样不必依赖 icon-offset 的数据驱动能力，就能给挤在一起的地名「散开」。 */
+  function makeChipOffset(text, opt, ox, oy) {
+    const base = makeChip(text, opt);
+    const w = base.width / PR, h = base.height / PR;
+    const W = Math.ceil(w + 2 * Math.abs(ox)), H = Math.ceil(h + 2 * Math.abs(oy));
+    const c = cvs(W, H), g = c.getContext('2d');
+    g.scale(PR, PR);
+    g.drawImage(base, Math.abs(ox) + ox, Math.abs(oy) - oy, w, h);
+    return c;
+  }
+
+  /* 无底框的文字注记（河名、现代参照地名）：描边当暗底，不与历史点名地点的色块 chip 抢位置。
+     画布比文字大一圈，锚点仍是画布中心，off = [向右, 向上] 的像素位移。 */
+  function makeTextLabel(text, opt) {
+    opt = opt || {};
+    const color = opt.color || '#a9bcc9', fs = opt.fs || 11.5, weight = opt.weight || 600;
+    const font = weight + ' ' + fs + 'px "Microsoft YaHei","PingFang SC",sans-serif';
+    meas.font = font;
+    const tw = meas.measureText(text).width;
+    const w = Math.ceil(tw + 14), h = Math.ceil(fs + 10);
+    const off = opt.off || [0, 0];
+    const W = Math.ceil(w + 2 * Math.abs(off[0])), H = Math.ceil(h + 2 * Math.abs(off[1]));
+    const c = cvs(W, H), g = c.getContext('2d');
+    g.scale(PR, PR);
+    const x = W / 2 + off[0], y = H / 2 - off[1];
+    g.font = font;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.lineJoin = 'round'; g.lineWidth = 3.2; g.strokeStyle = 'rgba(4,8,12,.85)';
+    g.strokeText(text, x, y + 0.5);
+    g.fillStyle = color; g.fillText(text, x, y + 0.5);
+    return c;
+  }
+
+  function makeBadge(txt, color) {
+    const S = 40, c = cvs(S, S), g = c.getContext('2d');
+    g.scale(PR, PR);
+    const cx = S / 2, cy = S / 2;
+    g.beginPath(); g.arc(cx, cy, 18.5, 0, Math.PI * 2);
+    g.strokeStyle = color + '55'; g.lineWidth = 1.5; g.stroke();
+    g.beginPath(); g.arc(cx, cy, 14.5, 0, Math.PI * 2);
+    g.fillStyle = 'rgba(6,9,14,.88)'; g.fill();
+    g.lineWidth = 2; g.strokeStyle = color; g.stroke();
+    g.fillStyle = color; g.font = '700 19px "Microsoft YaHei",sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(txt, cx, cy + 1);
+    return c;
+  }
+
+  /* ================= 地图 ================= */
+  const map = new maplibregl.Map({
+    container: 'map',
+    style: {
+      version: 8,
+      sources: {
+        'bm-img': {
+          type: 'raster', tileSize: 256, maxzoom: 19,
+          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+          attribution: 'Imagery © Esri, Maxar, Earthstar Geographics'
+        },
+        'bm-dark': {
+          type: 'raster', tileSize: 256, maxzoom: 16,
+          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'],
+          attribution: 'Basemap © Esri, HERE, Garmin, © OpenStreetMap contributors'
+        },
+        dem: {
+          type: 'raster-dem', encoding: 'terrarium', tileSize: 256, maxzoom: 13,
+          tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png']
+        }
+      },
+      layers: [
+        { id: 'bm-img', type: 'raster', source: 'bm-img' },
+        { id: 'bm-dark', type: 'raster', source: 'bm-dark', layout: { visibility: 'none' } },
+        { id: 'hills', type: 'hillshade', source: 'dem', layout: { visibility: 'none' },
+          paint: { 'hillshade-exaggeration': 0.42, 'hillshade-shadow-color': '#02060b' } }
+      ]
+    },
+    center: [105.95, 27.95],
+    zoom: 7.9,
+    pitch: 0,
+    bearing: 0,
+    attributionControl: { compact: true }
+  });
+  window.__m = map;
+  window.__errors = [];
+  map.on('error', function (e) {
+    const m = (e && e.error && e.error.message) || String(e);
+    window.__errors.push(m);
+    console.warn('[map]', m);
+  });
+
+  let tbdWarned = false;
+  map.on('load', function () {
+    /* 赤水河：压在底图之上、行军路线之下，作为全图的骨架参照。
+       几何来自 OSM（真实河道），与 1935 年河道不完全一致，仅作定位用。 */
+    map.addSource('chishui', {
+      type: 'geojson',
+      data: { type: 'Feature', properties: {}, geometry: { type: 'MultiLineString', coordinates: CHISHUI.river } }
+    });
+    map.addLayer({
+      id: 'river-casing', type: 'line', source: 'chishui',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#03121b', 'line-width': 6.5, 'line-opacity': 0.5, 'line-blur': 2.5 }
+    });
+    map.addLayer({
+      id: 'river', type: 'line', source: 'chishui',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#54d6e8', 'line-width': 2, 'line-opacity': 0.82 }
+    });
+
+    /* 河名注记：点在河道顶点上，文字上移 13px 免得压住线 */
+    CHISHUI.riverLabels.forEach(function (r, i) {
+      map.addImage('rv-' + i, toData(makeTextLabel(r.name, { color: '#8fe6f4', fs: 12.5, weight: 700, off: [0, -13] })), { pixelRatio: PR });
+    });
+    map.addSource('river-name', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: CHISHUI.riverLabels.map(function (r, i) {
+          return { type: 'Feature', geometry: { type: 'Point', coordinates: r.lonlat }, properties: { icon: 'rv-' + i } };
+        })
+      }
+    });
+    map.addLayer({
+      id: 'river-name', type: 'symbol', source: 'river-name',
+      layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'center', 'icon-allow-overlap': true, 'icon-ignore-placement': true }
+    });
+
+    /* 现代参照地名：灰色小字，按缩放分级出现；参与碰撞检测，挤不下自动让位，
+       且历史点名地点（后加的图层）在碰撞中优先。 */
+    CHISHUI.refPlaces.forEach(function (p, i) {
+      const city = p.kind === 'city';
+      map.addImage('rf-' + i, toData(makeTextLabel(p.name, { color: city ? '#cbd8e4' : '#93a6b6', fs: city ? 12 : 11 })), { pixelRatio: PR });
+    });
+    map.addSource('ref-places', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: CHISHUI.refPlaces.map(function (p, i) {
+          return { type: 'Feature', geometry: { type: 'Point', coordinates: p.lonlat }, properties: { icon: 'rf-' + i, city: p.kind === 'city' } };
+        })
+      }
+    });
+    map.addLayer({
+      id: 'ref-city', type: 'symbol', source: 'ref-places', minzoom: 6.3,
+      filter: ['==', ['get', 'city'], true],
+      layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'center', 'icon-padding': 6 }
+    });
+    map.addLayer({
+      id: 'ref-town', type: 'symbol', source: 'ref-places', minzoom: 7.8,
+      filter: ['!=', ['get', 'city'], true],
+      layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'center', 'icon-padding': 6 }
+    });
+
+    /* 图标注册 */
+    LEGS.forEach(function (l) {
+      map.addImage('bd-' + l.id, toData(makeBadge(l.badge, l.color)), { pixelRatio: PR });
+      map.addImage('lb-' + l.id, toData(makeChip(l.name + ' ' + l.date, { color: l.color })), { pixelRatio: PR });
+    });
+    PLACES.forEach(function (p, i) {
+      const tbd = !!p.tbd;
+      const col = tbd ? TBD : (COLOR[p.kind] || '#dfe6ee');
+      const off = p.off || [0, 0];
+      map.addImage('pl-' + i, toData(makeChipOffset(p.name, { color: col, dashed: tbd }, off[0], off[1])), { pixelRatio: PR });
+    });
+    map.addImage('nt-s0', toData(makeChip('非渡河 · 集结转移', { color: '#8b9dae', dashed: true, fs: 11 })), { pixelRatio: PR });
+
+    /* 行军路线 */
+    LEGS.forEach(function (l) {
+      map.addSource('leg-' + l.id, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      map.addLayer({
+        id: 'leg-' + l.id + '-glow', type: 'line', source: 'leg-' + l.id,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': l.color, 'line-width': 12, 'line-opacity': 0.14, 'line-blur': 8 }
+      });
+      const paint = { 'line-color': l.color, 'line-width': l.dash ? 2 : 3.4, 'line-opacity': l.quiet ? 0.75 : 1 };
+      if (l.dash) paint['line-dasharray'] = [2, 1.6];
+      map.addLayer({
+        id: 'leg-' + l.id, type: 'line', source: 'leg-' + l.id,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: paint
+      });
+    });
+
+    /* 地名点位 */
+    map.addSource('places', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: PLACES.map(function (p, i) {
+          const tbd = !!p.tbd;
+          const col = tbd ? TBD : (COLOR[p.kind] || '#dfe6ee');
+          return {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: p.lonlat },
+            properties: {
+              i: i, icon: 'pl-' + i, color: col, ferry: p.kind === 'ferry',
+              r: p.kind === 'ferry' ? 5 : 4.2
+            }
+          };
+        })
+      }
+    });
+    map.addLayer({
+      id: 'ferry-ring', type: 'circle', source: 'places',
+      filter: ['==', ['get', 'ferry'], true],
+      paint: { 'circle-radius': 10, 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-width': 1.2, 'circle-stroke-color': ['get', 'color'], 'circle-stroke-opacity': 0.5 }
+    });
+    map.addLayer({
+      id: 'places-dot', type: 'circle', source: 'places',
+      paint: { 'circle-radius': ['get', 'r'], 'circle-color': ['get', 'color'], 'circle-stroke-width': 1.4, 'circle-stroke-color': 'rgba(4,7,11,.85)' }
+    });
+    map.addLayer({
+      id: 'places-lb', type: 'symbol', source: 'places',
+      filter: ['!=', ['get', 'ferry'], true],
+      layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'bottom', 'icon-offset': [0, -9],
+                'icon-allow-overlap': true, 'icon-ignore-placement': true }
+    });
+    /* 渡口名在倾斜视角下会挤向地平线：抬高俯仰时只留点位，收起名称 */
+    map.addLayer({
+      id: 'places-lb-ferry', type: 'symbol', source: 'places',
+      filter: ['==', ['get', 'ferry'], true],
+      layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'bottom', 'icon-offset': [0, -9],
+                'icon-allow-overlap': true, 'icon-ignore-placement': true }
+    });
+
+    /* ①②③④ 徽标 + 日期条 */
+    map.addSource('badges', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({
+      id: 'badge-icon', type: 'symbol', source: 'badges',
+      filter: ['==', ['get', 'kind'], 'badge'],
+      layout: { 'icon-image': ['get', 'icon'], 'icon-size': 1, 'icon-allow-overlap': true, 'icon-ignore-placement': true }
+    });
+    map.addLayer({
+      id: 'badge-label', type: 'symbol', source: 'badges',
+      filter: ['==', ['get', 'kind'], 'label'],
+      layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'left', 'icon-offset': [24, 0],
+                'icon-allow-overlap': true, 'icon-ignore-placement': true }
+    });
+    /* 日期条往左伸的一份（避开右侧地名） */
+    map.addSource('badges-l', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({
+      id: 'badge-label-l', type: 'symbol', source: 'badges-l',
+      layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'right', 'icon-offset': [-24, 0],
+                'icon-allow-overlap': true, 'icon-ignore-placement': true }
+    });
+    map.setTerrain({ source: 'dem', exaggeration: 1.35 });
+
+    /* 格网与棋子：只在 ?game=<种子> 时出现 */
+    if (REPLAY) initGridLayers();
+    initSpotLayers();
+
+    /* 视野取景：常规视图把四渡全部装进画面；回放视图只框住棋盘。
+       左侧让出控制面板，回放时右侧再让出回放面板。窗口变化后重新取景。 */
+    const bounds = new maplibregl.LngLatBounds();
+    if (REPLAY) {
+      const gb = G.bbox();
+      bounds.extend([gb[0], gb[1]]);
+      bounds.extend([gb[2], gb[3]]);
+    } else {
+      LEGS.forEach(function (l) { l.coords.forEach(function (c) { bounds.extend(c); }); });
+      PLACES.forEach(function (p) { bounds.extend(p.lonlat); });
+    }
+    const FIT = {
+      padding: { top: 128, bottom: 108, left: 398, right: REPLAY ? 352 : 128 },
+      maxZoom: REPLAY ? 11.5 : 9.2, duration: 0
+    };
+    map.fitBounds(bounds, FIT);
+    map.on('resize', function () { map.fitBounds(bounds, FIT); });
+
+    applyParams();
+    if (REPLAY) initReplay();
+    /* ?ll=<经度>,<纬度>&name=<地名>（行军日志记录带过来）优先于 ?place=<地名> */
+    const wantLL = QS.get('ll');
+    const wantPlace = QS.get('place');
+    if (wantLL) {
+      const ll = wantLL.split(',').map(Number);
+      if (ll.length === 2 && isFinite(ll[0]) && isFinite(ll[1])) {
+        setTimeout(function () { flyToLL(ll, QS.get('name')); }, 350);
+      }
+    } else if (wantPlace) setTimeout(function () { flyToPlace(wantPlace); }, 350);
+    requestAnimationFrame(loop);
+    const lo = document.getElementById('loading');
+    function ready() { window.__idle = true; lo.classList.add('off'); }
+    map.once('idle', ready);
+    map.on('sourcedata', function (e) {           // 底图瓦片一到就先让人看见地图
+      if (e.sourceId === 'bm-img' && e.isSourceLoaded) ready();
+    });
+    setTimeout(function () {                      // 瓦片迟迟不来也不能一直挡着地图
+      if (!window.__idle) { lo.textContent = '底图瓦片尚未加载完：可能无法访问 CDN 或瓦片服务'; lo.classList.add('off'); }
+    }, 9000);
+  });
+
+  /* 底图切换 */
+  document.getElementById('basemap').addEventListener('change', function (e) {
+    const dark = e.target.value === 'dark';
+    map.setLayoutProperty('bm-img', 'visibility', dark ? 'none' : 'visible');
+    map.setLayoutProperty('bm-dark', 'visibility', dark ? 'visible' : 'none');
+    map.setLayoutProperty('hills', 'visibility', dark ? 'visible' : 'none');
+  });
+
+  /* 视图：2D 平视 / 3D 斜视 一键切换，滑杆同步；0° 为纯 2D「之」字，拉高看地形 */
+  const pEl = document.getElementById('pitch'), pVal = document.getElementById('pitchVal');
+  const v2d = document.getElementById('v2d'), v3d = document.getElementById('v3d');
+  let pitchRAF = 0, pitchTimer = 0;
+
+  function setPitchUI(p) {
+    const r = Math.round(p);
+    pEl.value = r;
+    pVal.textContent = r === 0 ? '0° 2D' : r + '° ' + (r < 24 ? '微倾' : r < 46 ? '倾斜' : '近 3D');
+    v2d.classList.toggle('on', r < 24);
+    v3d.classList.toggle('on', r >= 24);
+    syncFerryLabels();
+  }
+  function tweenPitch(target, dur) {
+    cancelAnimationFrame(pitchRAF);
+    clearTimeout(pitchTimer);
+    dur = Math.max(1, dur);
+    const p0 = map.getPitch(), t0 = performance.now();
+    function step(now) {
+      const k = Math.min(1, (now - t0) / dur);
+      const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      map.setPitch(p0 + (target - p0) * e);
+      setPitchUI(map.getPitch());
+      if (k < 1) pitchRAF = requestAnimationFrame(step);
+    }
+    step(t0);
+    /* 页面被切到后台时 rAF 不触发，兜底把俯仰落到目标值，否则按钮像没反应 */
+    pitchTimer = setTimeout(function () {
+      cancelAnimationFrame(pitchRAF);
+      map.setPitch(target);
+      setPitchUI(target);
+    }, dur + 120);
+  }
+  v2d.addEventListener('click', function () { tweenPitch(0, 340); });
+  v3d.addEventListener('click', function () { tweenPitch(52, 420); });
+  pEl.addEventListener('input', function () {
+    cancelAnimationFrame(pitchRAF);
+    clearTimeout(pitchTimer);
+    map.setPitch(parseFloat(pEl.value));
+    setPitchUI(map.getPitch());
+  });
+  function syncFerryLabels() {
+    if (!map.getLayer('places-lb-ferry')) return;
+    map.setLayoutProperty('places-lb-ferry', 'visibility', map.getPitch() < 40 ? 'visible' : 'none');
+  }
+  map.on('pitchend', syncFerryLabels);
+
+  /* ================= 时间轴：逐段揭示 ================= */
+  const SEQ = [
+    { id: 'L1', dur: 1.9 }, { id: 'S0', dur: 1.1 }, { id: 'L2', dur: 2.1 },
+    { id: 'L3', dur: 1.7 }, { id: 'L4', dur: 2.1 }
+  ];
+  let acc = 0.7;
+  SEQ.forEach(function (s) {
+    s.t0 = acc; s.t1 = acc + s.dur; acc = s.t1 + 0.42;
+  });
+  const TOTAL = acc;
+  const legById = {};
+  LEGS.forEach(function (l) { legById[l.id] = l; });
+
+  const state = { t: 0, playing: false };
+
+  function segLens(pts) {
+    const l = []; let total = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      l.push(d); total += d;
+    }
+    return { lens: l, total: total };
+  }
+  function partialPath(pts, f) {
+    if (f <= 0) return [];
+    if (f >= 1 || pts.length === 1) return pts.slice();
+    const m = segLens(pts);
+    let target = f * m.total;
+    const out = [pts[0].slice()];
+    for (let i = 0; i < m.lens.length; i++) {
+      if (target >= m.lens[i]) {
+        out.push(pts[i + 1].slice());
+        target -= m.lens[i];
+      } else {
+        const r = m.lens[i] === 0 ? 0 : target / m.lens[i];
+        out.push([pts[i][0] + (pts[i + 1][0] - pts[i][0]) * r,
+                  pts[i][1] + (pts[i + 1][1] - pts[i][1]) * r]);
+        break;
+      }
+    }
+    return out;
+  }
+  const clamp01 = function (v) { return v < 0 ? 0 : v > 1 ? 1 : v; };
+
+  const els = {
+    play: document.getElementById('play'),
+    replay: document.getElementById('replay'),
+    bar: document.getElementById('bar'),
+    steps: document.getElementById('steps'),
+    nowName: document.getElementById('nowName'),
+    nowDate: document.getElementById('nowDate')
+  };
+
+  /* 左侧阶段列表 */
+  els.steps.innerHTML = SEQ.map(function (s) {
+    const l = legById[s.id];
+    return '<div class="step" data-id="' + s.id + '">' +
+             '<span class="sw" style="color:' + l.color + '"></span>' +
+             '<span>' + (l.quiet ? l.name : l.badge + ' ' + l.name) + '</span>' +
+             '<span class="d">' + l.date + '</span>' +
+           '</div>';
+  }).join('');
+  const stepEls = {};
+  Array.prototype.forEach.call(els.steps.children, function (el) { stepEls[el.getAttribute('data-id')] = el; });
+
+  const counts = { legs: 0, badges: 0 };
+  let lastActive = null;
+
+  function render() {
+    const t = state.t;
+    const bf = [], blf = [];
+    let active = null;
+
+    SEQ.forEach(function (s) {
+      const l = legById[s.id];
+      const f = clamp01((t - s.t0) / s.dur);
+      const src = map.getSource('leg-' + s.id);
+      if (src) {
+        const pts = partialPath(l.coords, f);
+        src.setData({
+          type: 'FeatureCollection',
+          features: pts.length > 1
+            ? [{ type: 'Feature', geometry: { type: 'LineString', coordinates: pts }, properties: {} }]
+            : []
+        });
+      }
+      counts.legs = SEQ.filter(function (x) { return t > x.t0; }).length;
+      if (t >= s.t0) {
+        active = s;
+        bf.push({ type: 'Feature', geometry: { type: 'Point', coordinates: l.badgeAt },
+                  properties: { kind: 'badge', icon: 'bd-' + l.id } });
+        const lab = { type: 'Feature', geometry: { type: 'Point', coordinates: l.badgeAt },
+                      properties: { kind: 'label', icon: l.quiet ? 'nt-s0' : 'lb-' + l.id } };
+        (l.labelLeft ? blf : bf).push(lab);
+      }
+    });
+
+    const sb = map.getSource('badges');
+    if (sb) sb.setData({ type: 'FeatureCollection', features: bf });
+    const sbl = map.getSource('badges-l');
+    if (sbl) sbl.setData({ type: 'FeatureCollection', features: blf });
+    counts.badges = bf.length + blf.length;
+
+    els.bar.style.width = (clamp01(t / TOTAL) * 100).toFixed(1) + '%';
+
+    if (active !== lastActive) {
+      lastActive = active;
+      SEQ.forEach(function (s) {
+        const el = stepEls[s.id];
+        if (el) el.classList.toggle('on', t >= s.t0);
+      });
+      if (active) {
+        const l = legById[active.id];
+        els.nowName.textContent = l.quiet ? l.name : l.badge + ' ' + l.name;
+        els.nowName.style.color = l.color;
+        els.nowDate.textContent = l.date + ' · ' + l.dir;
+      } else {
+        els.nowName.textContent = '—';
+        els.nowName.style.color = '#e8eef5';
+        els.nowDate.textContent = '点击「逐步演示」开始';
+      }
+    }
+  }
+
+  let last = 0;
+  function loop(now) {
+    const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
+    last = now;
+    if (state.playing) {
+      state.t += dt;
+      if (state.t >= TOTAL) { state.t = TOTAL; setPlaying(false); }
+    }
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  function setPlaying(v) {
+    state.playing = v;
+    els.play.textContent = v ? '❚❚ 暂停' : (state.t >= TOTAL ? '▶ 重新演示' : '▶ 逐步演示');
+  }
+
+  els.play.addEventListener('click', function () {
+    if (state.t >= TOTAL) state.t = 0;
+    setPlaying(!state.playing);
+  });
+  els.replay.addEventListener('click', function () {
+    state.t = 0; lastActive = null; setPlaying(true);
+  });
+
+  /* ================= 格网叠加与推演回放（?game=<种子>） =================
+     格网是 core/engine.js 那张 12 列 × 9 行抽象棋盘落到真实地图上的样子，
+     经纬度映射只在 core/grid-geo.js 一处。棋子为推演占位（红1 / 蓝1），
+     不是真实番号，也不构成战史结论。地图只拿「种子 + 本机记录的红方命令」
+     就能复现格子件里那一局（引擎确定性：同种子同命令 → 逐字段一致）。 */
+  const G = window.GridGeo, RPL = window.Replay;
+  const QS = new URLSearchParams(location.search);
+  const GAME_SEED = QS.has('game') ? (parseInt(QS.get('game'), 10) || 0) : null;
+  const RT = { n: 0, playing: false, timer: 0 };
+  let REPLAY = null, replaySrc = '', lastApplied = null;
+
+  function loadRecord(seed) {
+    try {
+      const s = JSON.parse(localStorage.getItem('siduchishui.sim.' + seed) || 'null');
+      return (s && s.seed === seed && Array.isArray(s.red)) ? s : null;
+    } catch (err) { return null; }
+  }
+  if (GAME_SEED != null && G && RPL) {
+    const rec = loadRecord(GAME_SEED);
+    REPLAY = RPL.run(GAME_SEED, { red: rec ? rec.red : null });
+    replaySrc = rec ? '同种子 + 本机记录的红方命令' : '同种子 · 双方交给 AI（本机没有这一局的命令记录）';
+    if (rec && rec.red.length < REPLAY.turns) replaySrc += '；记录只到第 ' + rec.red.length + ' 回合，其后红方交给 AI';
+  }
+
+  /* 棋子图标：红蓝各一色，名字是占位番号 */
+  function makeCounter(name, side) {
+    const font = '700 13px "SimHei","Microsoft YaHei",sans-serif';
+    meas.font = font;
+    const w = Math.ceil(meas.measureText(name).width + 18), h = 26;
+    const c = cvs(w, h), g = c.getContext('2d');
+    g.scale(PR, PR);
+    roundRect(g, 0.75, 0.75, w - 1.5, h - 1.5, 5);
+    g.fillStyle = side === 'red' ? 'rgba(192,57,43,.93)' : 'rgba(61,123,184,.93)';
+    g.fill();
+    g.lineWidth = 1.5; g.strokeStyle = 'rgba(255,255,255,.5)'; g.stroke();
+    g.fillStyle = '#fff'; g.font = font;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(name, w / 2, h / 2 + 0.5);
+    return c;
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>]/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]; });
+  }
+  const PLACE_RE = new RegExp(Object.keys(G.PLACES).concat(['西岸'])
+    .sort(function (a, b) { return b.length - a.length; }).join('|'), 'g');
+
+  function initGridLayers() {
+    map.addSource('grid-cells', { type: 'geojson', data: G.cellPolygons() });
+    map.addLayer({
+      id: 'grid-fill', type: 'fill', source: 'grid-cells',
+      paint: {
+        'fill-color': ['match', ['get', 'terrain'], 'h', '#ffd166', 'p', '#ffb74d', 't', '#7fe7ff', 'f', '#54d6e8', 'R', '#3d7bb8', '#8b9dae'],
+        'fill-opacity': 0.05
+      }
+    });
+    map.addLayer({
+      id: 'grid-west', type: 'fill', source: 'grid-cells', filter: ['==', ['get', 'west'], true],
+      paint: { 'fill-color': '#8b9dae', 'fill-opacity': 0.1 }
+    });
+    map.addLayer({
+      id: 'grid-line', type: 'line', source: 'grid-cells',
+      layout: { 'line-join': 'round' },
+      paint: { 'line-color': 'rgba(255,209,102,.42)', 'line-width': 1, 'line-dasharray': [3, 2.4] }
+    });
+    /* 渡河脱离目标格，与 core/engine.js 的 RED_GOALS 一致 */
+    map.addLayer({
+      id: 'grid-goal', type: 'line', source: 'grid-cells',
+      filter: ['in', ['get', 'key'], ['literal', ['1,2', '1,5']]],
+      paint: { 'line-color': '#ffd166', 'line-width': 2.4, 'line-dasharray': [2, 1.4] }
+    });
+    REPLAY.frames[0].units.forEach(function (u) {
+      map.addImage('ct-' + u.id, toData(makeCounter(u.name, u.side)), { pixelRatio: PR });
+    });
+    map.addSource('moves', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addSource('counters', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({
+      id: 'move-line', type: 'line', source: 'moves',
+      layout: { 'line-cap': 'round' },
+      paint: {
+        'line-color': ['match', ['get', 'side'], 'red', '#ff7b6e', '#7fc0ff'],
+        'line-width': 2.4, 'line-opacity': 0.9, 'line-dasharray': [2, 1.4]
+      }
+    });
+    map.addLayer({
+      id: 'counter-dot', type: 'circle', source: 'counters',
+      paint: {
+        'circle-radius': 4,
+        'circle-color': ['match', ['get', 'side'], 'red', '#c0392b', '#3d7bb8'],
+        'circle-stroke-width': 1.2, 'circle-stroke-color': 'rgba(255,255,255,.6)'
+      }
+    });
+    map.addLayer({
+      id: 'counter', type: 'symbol', source: 'counters',
+      layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'center', 'icon-allow-overlap': true, 'icon-ignore-placement': true },
+      paint: { 'icon-opacity': ['case', ['get', 'gone'], 0.42, 1] }
+    });
+  }
+
+  /* 定位环：?place= 与回放日志里的地名共用 */
+  function initSpotLayers() {
+    map.addSource('spot', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({
+      id: 'spot-halo', type: 'circle', source: 'spot',
+      paint: { 'circle-radius': 22, 'circle-color': 'rgba(255,209,102,.14)', 'circle-stroke-width': 1, 'circle-stroke-color': 'rgba(255,209,102,.5)' }
+    });
+    map.addLayer({
+      id: 'spot-ring', type: 'circle', source: 'spot',
+      paint: { 'circle-radius': 6.5, 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-width': 2, 'circle-stroke-color': '#ffd166' }
+    });
+  }
+
+  const toastEl = document.getElementById('toast');
+  let toastTimer = 0;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('on'); }, 3800);
+  }
+
+  /* 地名 → 经纬度：先查本页历史地名表，再查格网地名表 */
+  function placeTarget(name) {
+    const p = PLACES.find(function (x) { return x.name === name; });
+    if (p) return { lonlat: p.lonlat, tbd: !!p.tbd, note: '' };
+    if (name === '西岸') {
+      return { lonlat: [G.WEST + G.CELL_LON / 2, G.NORTH - G.CELL_LAT * 4.5], tbd: false, note: '格网西岸脱离区（示意）' };
+    }
+    const info = G.placeInfo(name);
+    if (info) return { lonlat: info.lonlat, tbd: !info.real, note: info.note };
+    return null;
+  }
+  function flyToTarget(t, name, noFly) {
+    const zoom = Math.max(map.getZoom(), 10.4);
+    if (!noFly) {
+      if (document.hidden) map.jumpTo({ center: t.lonlat, zoom: zoom });
+      else map.flyTo({ center: t.lonlat, zoom: zoom, duration: 900 });
+    }
+    const s = map.getSource('spot');
+    if (s) s.setData({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: t.lonlat } });
+    toast('定位：' + name + (t.note ? ' · ' + t.note : '') + (t.tbd ? '（该点在图上标「待核」）' : ''));
+  }
+  function flyToPlace(name, noFly) {
+    const t = placeTarget(name);
+    if (!t) { toast('地图上没有「' + name + '」这个点位'); return false; }
+    flyToTarget(t, name, noFly);
+    return true;
+  }
+  /* ?ll=<经度>,<纬度>&name=<地名>：外部页面（如播放器的行军日志）直接带坐标定位，
+     不依赖本页地名表 —— 记录里的 lonlat 是权威，地名只是显示用 */
+  function flyToLL(lonlat, name, noFly) {
+    flyToTarget({ lonlat: lonlat, tbd: false, note: '按行军日志记录的坐标定位' }, name || '记录点位', noFly);
+  }
+
+  /* 一帧态势：k ∈ [0,1] 为回合内的推进比例（0 = 上一回合位置） */
+  function buildFrameData(n, k) {
+    const f = REPLAY.frames[n];
+    const prev = n > 0 ? REPLAY.frames[n - 1] : null;
+    const pmap = {};
+    if (prev) prev.units.forEach(function (u) { pmap[u.id] = u; });
+    const counters = [], moves = [];
+    f.units.forEach(function (u) {
+      const p = pmap[u.id];
+      const here = G.cellCenter(u.col, u.row);
+      let pos = here;
+      if (p && k < 1 && !p.exited && !p.dead) {
+        const from = G.cellCenter(p.col, p.row);
+        pos = [from[0] + (here[0] - from[0]) * k, from[1] + (here[1] - from[1]) * k];
+        if (p.col !== u.col || p.row !== u.row) {
+          moves.push({ type: 'Feature', properties: { side: u.side }, geometry: { type: 'LineString', coordinates: [from, pos] } });
+        }
+      } else if (p && (p.col !== u.col || p.row !== u.row)) {
+        moves.push({ type: 'Feature', properties: { side: u.side }, geometry: { type: 'LineString', coordinates: [G.cellCenter(p.col, p.row), here] } });
+      }
+      counters.push({
+        type: 'Feature',
+        properties: { icon: 'ct-' + u.id, side: u.side, gone: !!(u.exited || u.dead) },
+        geometry: { type: 'Point', coordinates: pos }
+      });
+    });
+    return { counters: counters, moves: moves };
+  }
+
+  function applyFrame(n, k) {
+    const d = buildFrameData(n, k);
+    lastApplied = d;
+    const sc = map.getSource('counters'), sm = map.getSource('moves');
+    if (sc) sc.setData({ type: 'FeatureCollection', features: d.counters });
+    if (sm) sm.setData({ type: 'FeatureCollection', features: d.moves });
+  }
+
+  const elsRp = {
+    box: document.getElementById('rp'),
+    seed: document.getElementById('rpSeed'),
+    meta: document.getElementById('rpMeta'),
+    turn: document.getElementById('rpTurn'),
+    log: document.getElementById('rpLog'),
+    prev: document.getElementById('rpPrev'),
+    next: document.getElementById('rpNext'),
+    play: document.getElementById('rpPlay'),
+    back: document.getElementById('rpBack')
+  };
+
+  function renderReplayLog(f) {
+    elsRp.log.innerHTML = '';
+    if (!f.log.length) {
+      const d = document.createElement('div');
+      d.className = 'ev2 k-turn';
+      d.textContent = RT.n ? '（本回合无播报）'
+        : '开局：' + f.units.filter(function (u) { return !u.exited && !u.dead; })
+            .map(function (u) { return u.name + '（' + u.col + ',' + u.row + ' 格）'; }).join('、');
+      elsRp.log.appendChild(d);
+      return;
+    }
+    f.log.forEach(function (e) {
+      const d = document.createElement('div');
+      d.className = 'ev2 k-' + (e.kind || 'turn');
+      const txt = esc(e.text).replace(PLACE_RE, function (m) {
+        return '<span class="pl" data-place="' + m + '" title="在地图上定位">' + m + '</span>';
+      });
+      d.innerHTML = '<span class="clk">' + e.clock + '</span>' + txt;
+      elsRp.log.appendChild(d);
+    });
+  }
+
+  function renderReplay() {
+    const f = REPLAY.frames[RT.n];
+    elsRp.seed.textContent = '种子 ' + REPLAY.seed;
+    elsRp.turn.textContent = RT.n === 0 ? '开局态势' : '第 ' + RT.n + ' / ' + REPLAY.turns + ' 回合 · ' + f.clock;
+    const w = (RT.n === REPLAY.turns && REPLAY.winner)
+      ? (REPLAY.winner === 'red' ? ' · 红方达成目标' : ' · 蓝方达成目标') : '';
+    elsRp.meta.textContent = replaySrc + w;
+    elsRp.prev.disabled = RT.n <= 0;
+    elsRp.next.disabled = RT.n >= REPLAY.turns;
+    renderReplayLog(f);
+  }
+
+  let repRAF = 0, repTimer = 0;
+  function showTurn(n, instant) {
+    if (!REPLAY) return;
+    n = Math.max(0, Math.min(REPLAY.turns, n));
+    RT.n = n;
+    cancelAnimationFrame(repRAF);
+    clearTimeout(repTimer);
+    if (instant || n === 0 || document.hidden) { applyFrame(n, 1); renderReplay(); return; }
+    const t0 = performance.now(), DUR = 420;
+    function step(now) {
+      const k = Math.min(1, (now - t0) / DUR);
+      applyFrame(n, k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+      if (k < 1) repRAF = requestAnimationFrame(step);
+    }
+    step(t0);
+    /* 页面被切到后台时 rAF 不触发，兜底落终帧 */
+    repTimer = setTimeout(function () { cancelAnimationFrame(repRAF); applyFrame(n, 1); }, DUR + 160);
+    renderReplay();
+  }
+
+  function stopAuto() { RT.playing = false; clearInterval(RT.timer); elsRp.play.textContent = '▶ 自动播放'; }
+  function startAuto() {
+    if (RT.n >= REPLAY.turns) showTurn(0, true);
+    RT.playing = true;
+    elsRp.play.textContent = '❚❚ 暂停';
+    RT.timer = setInterval(function () {
+      if (RT.n >= REPLAY.turns) { stopAuto(); return; }
+      showTurn(RT.n + 1);
+    }, 1500);
+  }
+
+  function initReplay() {
+    elsRp.box.hidden = false;
+    document.getElementById('gridLegend').hidden = false;
+    elsRp.back.href = '../index.html?seed=' + REPLAY.seed + '&auto=1';
+    elsRp.prev.addEventListener('click', function () { stopAuto(); showTurn(RT.n - 1); });
+    elsRp.next.addEventListener('click', function () { stopAuto(); showTurn(RT.n + 1); });
+    elsRp.play.addEventListener('click', function () { if (RT.playing) stopAuto(); else startAuto(); });
+    elsRp.log.addEventListener('click', function (e) {
+      const t = e.target.closest ? e.target.closest('.pl') : null;
+      if (t) flyToPlace(t.getAttribute('data-place'));
+    });
+    document.querySelector('.hint').textContent = '拖拽平移 · 滚轮缩放 · ◀ ▶ 或 ← → 翻回合 · 点回放日志里的地名可定位';
+    window.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') { stopAuto(); showTurn(RT.n - 1); }
+      else if (e.key === 'ArrowRight') { stopAuto(); showTurn(RT.n + 1); }
+    });
+    showTurn(parseInt(QS.get('turn'), 10) || 0, true);
+  }
+
+  /* ================= URL 参数（便于截图核对） ================= */
+  function applyParams() {
+    const q = new URLSearchParams(location.search);
+    if (q.has('t')) { state.t = parseFloat(q.get('t')) || 0; }
+    if (q.get('play') === '1') { state.t = 0; setPlaying(true); }
+    if (q.has('pitch')) {
+      pEl.value = q.get('pitch');
+      pEl.dispatchEvent(new Event('input'));
+    }
+    if (q.get('view') === '3d') { tweenPitch(52, 1); }
+    if (q.get('view') === '2d') { tweenPitch(0, 1); }
+    if (q.get('basemap') === 'dark') {
+      document.getElementById('basemap').value = 'dark';
+      document.getElementById('basemap').dispatchEvent(new Event('change'));
+    }
+    map.fire('pitchend');          // 让渡口名可见性跟上初始俯仰
+  }
+
+  window.__s = {
+    state: state, total: TOTAL, map: map,
+    place: function (name) { return flyToPlace(name, true); },
+    ll: function (lonlat, name) { flyToLL(lonlat, name, true); return true; },
+    info: function () {
+      let images = -1;
+      try { images = map.listImages().length; } catch (e) { /* style 未就绪 */ }
+      return {
+        t: state.t, playing: state.playing, loaded: map.loaded(),
+        pitch: map.getPitch(), zoom: map.getZoom(), images: images,
+        legsDrawn: counts.legs, badges: counts.badges,
+        game: GAME_SEED, replayTurn: RT.n,
+        errors: window.__errors.slice(0, 5)
+      };
+    }
+  };
+
+  /* 回放模式的自动化接口：不开浏览器也能断言「第 N 回合棋子在哪、面板写了什么」 */
+  window.__r = REPLAY ? {
+    seed: REPLAY.seed, turns: REPLAY.turns, winner: REPLAY.winner, src: replaySrc,
+    simLog: REPLAY.simLog,
+    info: function () {
+      const f = REPLAY.frames[RT.n];
+      const src = map.getSource('counters');
+      return {
+        turn: RT.n, turns: REPLAY.turns, clock: f.clock, winner: f.winner,
+        units: f.units.map(function (u) {
+          return u.id + ':' + u.col + ',' + u.row + (u.exited ? '(渡河)' : '') + (u.dead ? '(退出)' : '') + (u.seenByRed ? '*' : '');
+        }),
+        pushed: lastApplied ? lastApplied.counters.map(function (c) {
+          return c.properties.icon + '@' + c.geometry.coordinates.map(function (v) { return v.toFixed(4); }).join(',') +
+                 (c.properties.gone ? '(淡)' : '');
+        }) : null,
+        moveLines: lastApplied ? lastApplied.moves.length : 0,
+        logLines: document.querySelectorAll('#rpLog .ev2').length,
+        title: document.getElementById('rpTurn').textContent,
+        meta: document.getElementById('rpMeta').textContent,
+        panel: !document.getElementById('rp').hidden,
+        legend: !document.getElementById('gridLegend').hidden,
+        back: document.getElementById('rpBack').getAttribute('href'),
+        hasCounters: !!src,
+        errors: window.__errors.slice(0, 5)
+      };
+    },
+    showTurn: function (n, instant) { stopAuto(); showTurn(n, instant !== false); return this.info(); },
+    place: function (name) { return flyToPlace(name, true); },
+    flyTo: function (name) { return flyToPlace(name); }
+  } : null;
+})();
+</script>
+</body>
+</html>
